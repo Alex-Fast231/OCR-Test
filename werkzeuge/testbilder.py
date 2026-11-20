@@ -247,11 +247,13 @@ def formular(d):
 
 
 # ---------------------------------------------------------------- „Fotos“
-def hintergrund(w, h, rng):
+def hintergrund(w, h, rng, hell=False):
     basis = np.array([120, 92, 70], np.float32) * rng.uniform(0.75, 1.1)
+    if hell:  # heller, fast weißer Tisch: wenig Kontrast zum Blatt
+        basis = np.array([226, 224, 219], np.float32)
     y = np.linspace(0, 1, h)[:, None]
     x = np.linspace(0, 1, w)[None, :]
-    maser = (np.sin(y * 90 + np.sin(x * 7) * 3) * 10 + np.sin(y * 300) * 4)[:, :, None]
+    maser = (np.sin(y * 90 + np.sin(x * 7) * 3) * 10 + np.sin(y * 300) * 4)[:, :, None] * (0.3 if hell else 1)
     bild = basis[None, None, :] + maser + rng.normal(0, 4, (h, w, 1))
     return np.clip(bild, 0, 255)
 
@@ -265,14 +267,30 @@ def perspektive_koeff(ziel, quelle):
     return np.linalg.solve(np.array(A, float), np.array(B, float)).tolist()
 
 
+def woelben(blatt, staerke):
+    """Blatt wie auf eine Rolle gebogen: waagerechte Linien werden zu Bögen."""
+    a = np.asarray(blatt.convert("RGBA"))
+    h, w = a.shape[:2]
+    u = np.arange(w) / (w - 1)
+    versatz = (staerke * h * 4 * u * (1 - u)).astype(np.int32)  # je Spalte
+    rand = int(staerke * h) + 2
+    aus = np.zeros((h + rand, w, 4), np.uint8)
+    for x in range(w):
+        aus[versatz[x]:versatz[x] + h, x] = a[:, x]
+    return Image.fromarray(aus)
+
+
 def foto(blatt, variante, rng):
-    W, H = 2400, 1800
+    W, H = (1800, 2400) if variante == "hochkant" else (2400, 1800)
+    if variante == "gewoelbt":
+        blatt = woelben(blatt, 0.04)
     bw, bh = blatt.size
-    breite = rng.uniform(0.72, 0.82) * W
+    breite = rng.uniform(0.72, 0.82) * (H if variante == "hochkant" else W)
     hoehe = breite * bh / bw
     cx, cy = W / 2 + rng.uniform(-60, 60), H / 2 + rng.uniform(-50, 50)
     ecken = np.array([[-breite / 2, -hoehe / 2], [breite / 2, -hoehe / 2], [breite / 2, hoehe / 2], [-breite / 2, hoehe / 2]])
-    winkel = {"gedreht": rng.choice([-1, 1]) * rng.uniform(6, 10)}.get(variante, rng.uniform(-1.5, 1.5))
+    winkel = {"gedreht": rng.choice([-1, 1]) * rng.uniform(6, 10),
+              "hochkant": rng.choice([-1, 1]) * 90 + rng.uniform(-3, 3)}.get(variante, rng.uniform(-1.5, 1.5))
     a = math.radians(winkel)
     rot = np.array([[math.cos(a), -math.sin(a)], [math.sin(a), math.cos(a)]])
     ecken = ecken @ rot.T
@@ -282,7 +300,7 @@ def foto(blatt, variante, rng):
         ecken[0, 1] += hoehe * 0.04; ecken[1, 1] += hoehe * 0.02
     ecken += [cx, cy]
     koeff = perspektive_koeff(ecken.tolist(), [(0, 0), (bw, 0), (bw, bh), (0, bh)])
-    hg = Image.fromarray(hintergrund(W, H, rng).astype(np.uint8))
+    hg = Image.fromarray(hintergrund(W, H, rng, hell=(variante == "hell")).astype(np.uint8))
     blatt_rgba = blatt.convert("RGBA")
     verzerrt = blatt_rgba.transform((W, H), Image.PERSPECTIVE, koeff, resample=Image.BICUBIC, fillcolor=(0, 0, 0, 0))
     hg.paste(verzerrt, (0, 0), verzerrt)
@@ -332,7 +350,7 @@ def schablone():
     }
 
 
-VARIANTEN = ["gerade", "schraeg", "gedreht", "dunkel", "schatten", "unscharf"]
+VARIANTEN = ["gerade", "schraeg", "gedreht", "dunkel", "schatten", "unscharf", "hell", "gewoelbt", "hochkant"]
 
 
 def main():

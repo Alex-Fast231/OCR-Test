@@ -8,6 +8,16 @@ Stand 16.11.2026. Anweisung: `PAKET_OCR_PROTOTYP.md` (Chat), Feldauswahl nach R�
 
 Eine erste Fassung lag in `App-Agent/ocr-test/` (Commit `2f563ba`). Maßgeblich ist ab jetzt dieses Repo.
 
+## Änderungen 20.11.2026 (nach den ersten Versuchen von Alex)
+
+- **Foto hochkant kam quer an:** Die Kamera-Funktion des Browsers liefert auf manchen Android-Handys das Foto in Sensorlage. Ist das Kamerabild hochkant und das Foto quer, wird es jetzt um 90° gedreht.
+- **Lage automatisch:** Beim Auswerten liest der Prototyp Ausstellungsdatum, Geburtsdatum und ICD-10-Code. Sind sie nicht plausibel, probiert er die drei anderen Drehungen und nimmt die passende. Das wirkt erst richtig, wenn die Schablone am echten Rezept kalibriert ist. Bis dahin hilft die neue Vorschau „So wird das Blatt gelesen“ zusammen mit „Drehen“.
+- **Gewölbtes Blatt:** Zu den Ecken 1–4 kommen 4 Kantenmitten (gelbe Punkte). Das Entzerren berücksichtigt die Wölbung („Coons-Fläche“ über der Perspektive), der Umriss wird gebogen angezeigt. „Kanten gerade“ setzt die Mitten zurück.
+- **Blattränder:** Neue Kantenerkennung (`kanten.js`) über Kantenstärke und -richtung, Hough-Geraden und Prüfung „innen heller als außen“ (Blattrand statt aufgedruckter Rahmenlinie). Gewölbte Ränder werden als Bögen bewertet. Die bisherige Helligkeitssuche bleibt als zusätzlicher Vorschlag.
+- **Lupe:** Beim Ziehen eines Punkts wird er größer, und eine runde Lupe mit Fadenkreuz zeigt die Stelle vergrößert.
+- **Kalibriermodus:** Vergrößerung 1×–4× (der Ausschnitt lässt sich verschieben), Knopf „Ecken nachziehen“. Das JSON enthält nur noch Feldkennungen und vier Zahlen je Feld, z. B. `{"muster13":1,"felder":{"nachname":[0.0338,0.1524,0.3514,0.0524],…}}`, keine Namen, Rezeptdaten oder Bilder. Ein früher kopiertes JSON lässt sich mit „Eingefügtes JSON übernehmen“ wieder einspielen, etwa nach dem Neuladen der Seite.
+- **Test:** 3 neue Varianten im Generator: heller Tisch, gewölbtes Blatt, Hochkant-Foto mit quer liegendem Rezept. 54 Bilder × 17 Felder: 99 % (907 von 918), jede Variante 98–99 %. Dauer am PC im Mittel 1,7 s, höchstens 2,7 s (durch die Lageprüfung etwas mehr als vorher). Weiter keine Anfragen nach außen, kein Speicherzugriff, keine CSP-Fehler.
+
 ## Bedienung in fünf Sätzen
 
 1. Prototyp öffnen und warten, bis oben „Erkennung bereit“ steht (einmalig etwa 19 MB).
@@ -39,6 +49,7 @@ Weggelassen: Versichertennummer, Arzt-Nr., Betriebsstätten-Nr., Kasse, Diagnose
 | --- | --- |
 | `index.html`, `app.css`, `app.js` | Oberfläche: Kamera/Galerie, Ecken verschieben, Ergebnis mit Ampel, stimmt/falsch, Kalibriermodus, Auswertung, „Alles löschen“ |
 | `ocr-worker.js` | Web Worker: Blatt finden, entzerren, Felder ausschneiden, Erkennung (onnxruntime-web, WASM) |
+| `kanten.js` | Blattränder über Kanten (Hough-Geraden, Blattrand-Prüfung, Kantenmitten) |
 | `bild.js` | Bildverarbeitung ohne Bibliothek: Blattsuche, Entzerrung (Homographie), Ankreuzfelder, Zeilen trennen, roten Vordruck ausblenden, Schatten ausgleichen |
 | `pruefung.js` | Plausibilität |
 | `katalog.js` | Kopie aus App-Agent (`HEILMITTEL_KATALOG`, `PRAEFIX_REGELN`, `REZEPT_ITEM_OPTIONS`). Das Original ist unverändert. |

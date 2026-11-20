@@ -2,9 +2,11 @@
 // außer den eigenen Dateien aus ocr-test/. Das Bild liegt nur in dieser Variablen.
 import * as ort from "./lib/ort.wasm.min.mjs";
 import {
-  findeBlatt, verfeinereEcken, randEcken, entzerre, feldRechteck, ausschnittRGBA,
+  findeBlatt, randEcken, entzerre, feldRechteck, ausschnittRGBA,
   tintenAnteil, textZeilen, zeilenTensor, NORM_BREITE, NORM_HOEHE
 } from "./bild.js";
+import { kantenBild, findeViereck, findeMitten } from "./kanten.js";
+import { pruefeDatum, pruefeIcd } from "./pruefung.js";
 
 const MAX_KANTE = 3200;      // größere Fotos werden verkleinert
 const SUCH_KANTE = 800;      // Bildgröße für die Blattsuche
@@ -77,25 +79,47 @@ function zuImageData(bitmap, maxKante) {
   return { daten: g.getImageData(0, 0, w, h), faktor: f };
 }
 
+export function drehe(liste, schritte) {
+  let l = liste;
+  for (let i = 0; i < ((schritte % 4) + 4) % 4; i++) l = [l[3], l[0], l[1], l[2]];
+  return l;
+}
+
 async function neuesBild(bitmap) {
   const t0 = performance.now();
   bild = zuImageData(bitmap, MAX_KANTE).daten;
   const klein = zuImageData(bitmap, SUCH_KANTE);
   const vorschau = zuImageData(bitmap, VORSCHAU_KANTE);
   bitmap.close();
-  const fund = findeBlatt(klein.daten);
-  const skal = bild.width / klein.daten.width;
-  let ecken = fund.ecken.map(([x, y]) => [x * skal, y * skal]);
-  if (fund.sicher) ecken = verfeinereEcken(bild, ecken, fund.schwelle, Math.round(skal * 3) + 2, fund.art);
-  else ecken = randEcken(bild.width, bild.height).map((e, i) => (fund.ecken[i] ? [fund.ecken[i][0] * skal, fund.ecken[i][1] * skal] : e));
+  const kw = klein.daten.width, kh = klein.daten.height;
+  // 1) Kanten (Blattränder), 2) helle/weiße Fläche als zusätzlicher Vorschlag
+  const kb = kantenBild(klein.daten);
+  const hellFund = findeBlatt(klein.daten);
+  const vorschlaege = hellFund.ecken && hellFund.grund !== "Kein Blatt gefunden" ? [{ e: hellFund.ecken, art: "flaeche" }] : [];
+  const fund = findeViereck(kb, vorschlaege);
+  const skal = bild.width / kw;
+  let ecken, mitten, sicher = false, grund = "";
+  if (fund) {
+    ecken = fund.e;
+    mitten = fund.mitten || findeMitten(kb, ecken);
+    const b = fund.bewertung;
+    sicher = b.mittel > 0.55 && b.minimum > 0.3;
+    if (!sicher) grund = "Ränder nur teilweise erkannt";
+  } else {
+    ecken = randEcken(kw, kh);
+    grund = "Kein Blatt gefunden";
+  }
+  if (!mitten) mitten = [0, 1, 2, 3].map((i) => [(ecken[i][0] + ecken[(i + 1) % 4][0]) / 2, (ecken[i][1] + ecken[(i + 1) % 4][1]) / 2]);
+  ecken = ecken.map(([x, y]) => [x * skal, y * skal]);
+  mitten = mitten.map(([x, y]) => [x * skal, y * skal]);
   // Querformat: die längere Kante soll oben liegen
   const kante = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
   const quer = kante(ecken[0], ecken[1]) + kante(ecken[3], ecken[2]);
   const hoch = kante(ecken[0], ecken[3]) + kante(ecken[1], ecken[2]);
-  if (hoch > quer * 1.1) ecken = [ecken[3], ecken[0], ecken[1], ecken[2]];
+  if (hoch > quer * 1.1) { ecken = drehe(ecken, 1); mitten = drehe(mitten, 1); }
   const vb = await createImageBitmap(vorschau.daten);
   melde({
-    typ: "ecken", ecken, sicher: fund.sicher, grund: fund.grund,
+    typ: "ecken", ecken, mitten, sicher, grund,
     breite: bild.width, hoehe: bild.height, vorschau: vb, zeit: performance.now() - t0
   }, [vb]);
 }
@@ -124,30 +148,57 @@ async function erkenneZeile(zeile) {
   return ctcDekodieren(t.data, schritte, klassen);
 }
 
-async function auswerten(ecken, schablone) {
+async function leseFeld(blatt, feld) {
+  const r = feldRechteck(feld);
+  const ausschnitt = ausschnittRGBA(blatt, r, 6);
+  const e = { id: feld.id, ausschnitt };
+  if (feld.typ === "kreuz") {
+    e.anteil = tintenAnteil(blatt, r, 0.22, 0.55);
+  } else {
+    const { zeilen } = textZeilen(blatt, r, feld.zeilen || 1);
+    e.zeilen = [];
+    for (const z of zeilen) e.zeilen.push(await erkenneZeile(z));
+  }
+  return e;
+}
+
+// Lage prüfen: Daten und ICD-Code müssen lesbar sein. Wenn nicht, die anderen
+// drei Drehungen versuchen (Blatt verkehrt herum oder quer fotografiert).
+async function lageGuete(blatt, schablone) {
+  let punkte = 0;
+  for (const feld of schablone.felder) {
+    if (!["ausstellungsdatum", "geburtsdatum", "icd"].includes(feld.art) || feld.optional) continue;
+    const e = await leseFeld(blatt, feld);
+    const text = e.zeilen.map((z) => z.text).join(" ").trim();
+    if (!text) continue;
+    const b = feld.art === "icd" ? pruefeIcd(text) : pruefeDatum(text, feld.art);
+    if (b.ampel === "gruen" || (b.ampel === "gelb" && !b.hinweise.some((h) => /ungültig|kein/.test(h)))) punkte++;
+  }
+  return punkte;
+}
+
+async function auswerten(ecken, mitten, schablone, lageSuchen) {
   if (!bild) throw new Error("Kein Bild vorhanden");
   if (!sitzung) throw new Error("Erkennung ist noch nicht geladen");
   const t0 = performance.now();
-  const blatt = entzerre(bild, ecken, NORM_BREITE, NORM_HOEHE);
+  let blatt = entzerre(bild, ecken, NORM_BREITE, NORM_HOEHE, mitten);
+  let gedreht = 0;
+  if (lageSuchen) {
+    const ziel = schablone.felder.filter((f) => ["ausstellungsdatum", "geburtsdatum", "icd"].includes(f.art) && !f.optional).length;
+    let beste = await lageGuete(blatt, schablone);
+    for (let k = 1; k < 4 && beste < ziel; k++) {
+      const b2 = entzerre(bild, drehe(ecken, k), NORM_BREITE, NORM_HOEHE, drehe(mitten, k));
+      const g = await lageGuete(b2, schablone);
+      if (g > beste) { beste = g; blatt = b2; gedreht = k; }
+    }
+  }
   const t1 = performance.now();
   const felder = [];
-  for (const feld of schablone.felder) {
-    const r = feldRechteck(feld);
-    const ausschnitt = ausschnittRGBA(blatt, r, 6);
-    const e = { id: feld.id, ausschnitt };
-    if (feld.typ === "kreuz") {
-      e.anteil = tintenAnteil(blatt, r, 0.22, 0.55);
-    } else {
-      const { zeilen } = textZeilen(blatt, r, feld.zeilen || 1);
-      e.zeilen = [];
-      for (const z of zeilen) e.zeilen.push(await erkenneZeile(z));
-    }
-    felder.push(e);
-  }
+  for (const feld of schablone.felder) felder.push(await leseFeld(blatt, feld));
   const t2 = performance.now();
   const entzerrt = await createImageBitmap(blatt);
   melde({
-    typ: "ergebnis", felder, entzerrt,
+    typ: "ergebnis", felder, entzerrt, gedreht,
     zeiten: { entzerren: t1 - t0, erkennung: t2 - t1 }
   }, [entzerrt, ...felder.map((f) => f.ausschnitt.data.buffer)]);
 }
@@ -157,7 +208,7 @@ self.onmessage = async (ereignis) => {
   try {
     if (n.typ === "laden") await laden();
     else if (n.typ === "bild") await neuesBild(n.bitmap);
-    else if (n.typ === "auswerten") await auswerten(n.ecken, n.schablone);
+    else if (n.typ === "auswerten") await auswerten(n.ecken, n.mitten, n.schablone, n.lageSuchen);
     else if (n.typ === "loeschen") { bild = null; melde({ typ: "geloescht" }); }
   } catch (fehler) {
     melde({ typ: "fehler", bei: n.typ, meldung: String(fehler && fehler.message || fehler) });

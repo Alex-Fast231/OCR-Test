@@ -208,17 +208,47 @@ export function homographie(dst, src) {
   return [...x, 1];
 }
 
-export function entzerre(quelle, ecken, breite = NORM_BREITE, hoehe = NORM_HOEHE) {
-  const H = homographie([[0, 0], [breite, 0], [breite, hoehe], [0, hoehe]], ecken);
+function abbilden(H, x, y) {
+  const z = H[6] * x + H[7] * y + 1;
+  return [(H[0] * x + H[1] * y + H[2]) / z, (H[3] * x + H[4] * y + H[5]) / z];
+}
+
+// Kantenmitten (oben, rechts, unten, links) erlauben ein gewölbtes Blatt:
+// zuerst Perspektive über die vier Ecken, dann wird die Wölbung der Kanten
+// über eine Coons-Fläche ausgeglichen. Ohne Mitten: reine Perspektive.
+export function verzerrung(ecken, mitten, breite = NORM_BREITE, hoehe = NORM_HOEHE) {
+  const ziel = [[0, 0], [breite, 0], [breite, hoehe], [0, hoehe]];
+  const H = homographie(ziel, ecken);      // Blatt -> Foto
+  const Hi = homographie(ecken, ziel);     // Foto -> Blatt
+  let d = null;
+  if (mitten && mitten.length === 4) {
+    const gerade = [[breite / 2, 0], [breite, hoehe / 2], [breite / 2, hoehe], [0, hoehe / 2]];
+    // Nur die Abweichung quer zur Kante zählt (oben/unten: y, links/rechts: x).
+    // Entlang der Kante verschiebt die Perspektive die Bildmitte ohnehin.
+    d = mitten.map((m, i) => {
+      const [x, y] = abbilden(Hi, m[0], m[1]);
+      return i % 2 === 0 ? [0, y - gerade[i][1]] : [x - gerade[i][0], 0];
+    });
+  }
+  return (x, y) => {
+    if (d) {
+      const u = x / breite, v = y / hoehe;
+      const bu = 4 * u * (1 - u), bv = 4 * v * (1 - v);
+      x += (1 - v) * bu * d[0][0] + v * bu * d[2][0] + (1 - u) * bv * d[3][0] + u * bv * d[1][0];
+      y += (1 - v) * bu * d[0][1] + v * bu * d[2][1] + (1 - u) * bv * d[3][1] + u * bv * d[1][1];
+    }
+    return abbilden(H, x, y);
+  };
+}
+
+export function entzerre(quelle, ecken, breite = NORM_BREITE, hoehe = NORM_HOEHE, mitten = null) {
+  const f = verzerrung(ecken, mitten, breite, hoehe);
   const { width: sw, height: sh, data: s } = quelle;
   const aus = new Uint8ClampedArray(breite * hoehe * 4);
   for (let y = 0; y < hoehe; y++) {
-    const yy = y + 0.5;
     for (let x = 0; x < breite; x++) {
-      const xx = x + 0.5;
-      const z = H[6] * xx + H[7] * yy + 1;
-      let u = (H[0] * xx + H[1] * yy + H[2]) / z - 0.5;
-      let v = (H[3] * xx + H[4] * yy + H[5]) / z - 0.5;
+      let [u, v] = f(x + 0.5, y + 0.5);
+      u -= 0.5; v -= 0.5;
       const o = (y * breite + x) * 4;
       if (u < 0 || v < 0 || u >= sw - 1 || v >= sh - 1) {
         aus[o] = aus[o + 1] = aus[o + 2] = 255; aus[o + 3] = 255;

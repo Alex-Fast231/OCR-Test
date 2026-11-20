@@ -43,13 +43,17 @@
 
   <section id="ecken" class="karte versteckt">
     <h2>Blattecken</h2>
-    <p id="eckenHinweis" class="klein">Die vier Punkte auf die Ecken des Formulars ziehen, falls die Automatik danebenliegt.</p>
+    <p id="eckenHinweis" class="klein">Die Punkte 1–4 auf die Blattecken ziehen, falls die Automatik danebenliegt. Die kleinen Punkte in der Mitte jeder Kante auf den Blattrand ziehen, wenn das Blatt gewölbt ist. Beim Ziehen erscheint eine Lupe.</p>
     <div id="eckenFlaeche" class="flaeche">
       <canvas id="eckenCanvas"></canvas>
+      <canvas id="lupe" class="lupe versteckt" width="280" height="280"></canvas>
     </div>
+    <p class="klein">So wird das Blatt gelesen (oben muss oben sein, sonst „Drehen“):</p>
+    <canvas id="probeCanvas" class="probe"></canvas>
     <div class="knoepfe">
       <button id="auswertenBtn" type="button">Auswerten</button>
       <button id="drehenBtn" type="button" class="zweit">↻ Drehen</button>
+      <button id="geradeBtn" type="button" class="zweit">Kanten gerade</button>
       <button id="eckenZurueckBtn" type="button" class="zweit">Verwerfen</button>
     </div>
     <p id="eckenMeldung" class="meldung"></p>
@@ -71,9 +75,20 @@
 
   <section id="kalibrierung" class="karte versteckt">
     <h2>Kalibriermodus</h2>
-    <p class="klein">Feldrahmen über dem entzerrten Blatt verschieben (ziehen) und in der Größe ändern (Ecke rechts unten). Die Änderung gilt nur in dieser Sitzung. Für den Code das JSON kopieren.</p>
-    <div id="kalibrierFlaeche" class="flaeche">
-      <canvas id="kalibrierCanvas"></canvas>
+    <p class="klein">Feldrahmen über dem entzerrten Blatt verschieben (ziehen) und in der Größe ändern (rotes Quadrat rechts unten). Ist das Blatt schief oder gewölbt, zuerst „Ecken nachziehen“. Die Änderung gilt nur in dieser Sitzung. Das JSON enthält nur Feldkennungen und Zahlen, keine Namen oder Rezeptdaten.</p>
+    <div class="regler">
+      <label for="zoom">Vergrößerung</label>
+      <select id="zoom">
+        <option value="1">1×</option>
+        <option value="2">2×</option>
+        <option value="3">3×</option>
+        <option value="4">4×</option>
+      </select>
+    </div>
+    <div class="zoomrahmen">
+      <div id="kalibrierFlaeche" class="flaeche kalibrier">
+        <canvas id="kalibrierCanvas"></canvas>
+      </div>
     </div>
     <div class="regler">
       <label for="feldWahl">Feld wählen</label>
@@ -93,10 +108,15 @@
     <div class="knoepfe">
       <button id="neuAuswertenBtn" type="button">Mit diesen Rahmen neu auswerten</button>
       <button id="jsonBtn" type="button" class="zweit">JSON ausgeben</button>
+      <button id="eckenNachziehenBtn" type="button" class="zweit">Ecken nachziehen</button>
       <button id="kalibrierZurueckBtn" type="button" class="zweit">Zurück</button>
     </div>
-    <textarea id="jsonAusgabe" class="ausgabe versteckt" readonly rows="10"></textarea>
-    <button id="jsonKopierenBtn" type="button" class="zweit versteckt">JSON kopieren</button>
+    <textarea id="jsonAusgabe" class="ausgabe versteckt" rows="8" spellcheck="false"></textarea>
+    <div class="knoepfe">
+      <button id="jsonKopierenBtn" type="button" class="zweit versteckt">JSON kopieren</button>
+      <button id="jsonUebernehmenBtn" type="button" class="zweit versteckt">Eingefügtes JSON übernehmen</button>
+    </div>
+    <p id="jsonMeldung" class="meldung"></p>
   </section>
 
   <section id="auswertung" class="karte">
