@@ -156,7 +156,11 @@ async function leseFeld(blatt, feld) {
   if (feld.typ === "kreuz") {
     e.anteil = tintenAnteil(blatt, r, 0.22, 0.55);
   } else {
-    const { zeilen } = textZeilen(blatt, r, feld.zeilen || 1);
+    // Textfelder mit etwas Rand lesen: 0,6 mm oben/unten, 1 mm seitlich
+    const ry = Math.round(NORM_HOEHE / 148 * 0.6), rx = Math.round(NORM_BREITE / 105 * 1);
+    const x0 = Math.max(0, r.x - rx), y0 = Math.max(0, r.y - ry);
+    const rr = { x: x0, y: y0, w: Math.min(NORM_BREITE - x0, r.w + 2 * rx), h: Math.min(NORM_HOEHE - y0, r.h + 2 * ry) };
+    const { zeilen } = textZeilen(blatt, rr, feld.zeilen || 1, r.y - y0 + r.h / 2);
     e.zeilen = [];
     for (const z of zeilen) e.zeilen.push(await erkenneZeile(z));
   }

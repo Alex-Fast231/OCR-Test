@@ -8,6 +8,13 @@ Stand 16.11.2026. Anweisung: `PAKET_OCR_PROTOTYP.md` (Chat), Feldauswahl nach R�
 
 Eine erste Fassung lag in `App-Agent/ocr-test/` (Commit `2f563ba`). Maßgeblich ist ab jetzt dieses Repo.
 
+## Änderungen 21.11.2026: Kalibrierung von Alex eingetragen
+
+- `schablone-muster13.json` enthält jetzt die Feldpositionen, die Alex am echten Muster 13 kalibriert hat (17 Felder, nur Zahlen).
+- Textfelder werden mit etwas Rand gelesen (0,6 mm oben und unten, 1 mm seitlich), weil die Rahmen knapp sind (3,6–4,7 mm hoch). Liegen dadurch zwei Zeilen im Ausschnitt, gilt die Zeile, die die Mitte des Rahmens trifft.
+- Der lokale Test nutzt eine eigene Schablone für das Nachbau-Formular (`werkzeuge/schablone-testformular.json`, eingespielt über `test-lokal.mjs`). Der Generator überschreibt die echte Schablone nicht mehr.
+- Test mit dem Nachbau weiter 99 % (909 von 918). Mit echten Rezepten ist noch nicht getestet, das ist der nächste Schritt bei Alex.
+
 ## Änderungen 21.11.2026: Muster 13 ist hochkant
 
 - **Fehler behoben:** Der Prototyp ging von einem Muster 13 im Querformat aus und hat jedes Blatt auf 148 × 105 mm gezogen. Ein hochkant fotografiertes Rezept erschien dadurch quer und verzerrt. Jetzt gilt durchgehend **DIN A5 hochkant, 105 × 148 mm**: Entzerren (1050 × 1480 Pixel), Vorschau, Kalibrierung (Schritte von 0,5 mm), Schablone (`blatt_mm: [105, 148]`) und der Testformular-Nachbau.
@@ -117,7 +124,7 @@ Ladegröße insgesamt etwa 19,3 MB plus rund 60 KB eigener Code. Das Laden start
 
 ## Offene Fragen und Grenzen
 
-1. **Schablone nicht am echten Muster 13 ausgemessen.** Hier lag kein echtes Formular vor. Die Positionen gehören zum Nachbau. Vor dem ersten echten Test ein (leeres oder geschwärztes) Muster 13 fotografieren, im Kalibriermodus die Rahmen anpassen („Feld wählen“, Pfeile in 0,5-mm-Schritten oder ziehen), „JSON ausgeben“, kopieren und in den Chat geben. Dann wird `schablone-muster13.json` ersetzt. Ohne Kalibrierung liegen die Rahmen auf einem echten Rezept vermutlich daneben.
+1. **Schablone:** seit 21.11.2026 am echten Muster 13 kalibriert (siehe oben). Frühere Fassung dieses Punkts: **Schablone nicht am echten Muster 13 ausgemessen.** Hier lag kein echtes Formular vor. Die Positionen gehören zum Nachbau. Vor dem ersten echten Test ein (leeres oder geschwärztes) Muster 13 fotografieren, im Kalibriermodus die Rahmen anpassen („Feld wählen“, Pfeile in 0,5-mm-Schritten oder ziehen), „JSON ausgeben“, kopieren und in den Chat geben. Dann wird `schablone-muster13.json` ersetzt. Ohne Kalibrierung liegen die Rahmen auf einem echten Rezept vermutlich daneben.
 2. **Handschrift:** Das Modell ist auf gedruckten Text trainiert. Handschriftliche Rezepte oder Nachträge werden schlecht bis gar nicht gelesen.
 3. **„Ä“:** Großes „Ä“ wurde im Test immer als „A“ gelesen, die Ampel bleibt dabei grün. Namen also immer selbst ansehen.
 4. **ICD-Liste der App:** Die Prüfung nutzt die Präfixliste aus App-Agent (erste drei Zeichen). Gültige Codes außerhalb dieser Liste werden gelb. Die Diagnosegruppe für Höchstmenge und „vorrangig“ kommt aus dem ersten ICD-10-Code, nicht vom Rezept.

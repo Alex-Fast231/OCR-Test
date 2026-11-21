@@ -57,6 +57,11 @@ await kontext.addInitScript(() => {
   }
 });
 
+// Die Testbilder zeigen das Nachbau-Formular: dafür dessen Schablone ausliefern
+// (die echte schablone-muster13.json ist am echten Rezept kalibriert).
+const testSchablone = fs.readFileSync(new URL("./schablone-testformular.json", import.meta.url));
+await kontext.route("**/schablone-muster13.json", (r) => r.fulfill({ status: 200, contentType: "application/json", body: testSchablone }));
+
 const cdp = await kontext.newCDPSession(seite);
 if (drossel > 1) await cdp.send("Emulation.setCPUThrottlingRate", { rate: drossel });
 

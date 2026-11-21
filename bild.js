@@ -323,7 +323,7 @@ export function tintenAnteil(bild, r, innen = 0.22, faktor = 0.55) {
 
 // ------------------------------------------------------------ Textzeilen
 // Liefert vorbereitete Zeilen (Graustufen 0..255, schwarzer Text auf Weiß).
-export function textZeilen(bild, r, maxZeilen = 1) {
+export function textZeilen(bild, r, maxZeilen = 1, mitteY = null) {
   const papierUmgebung = papierHell(bild, r);
   const g = rotKanal(bild, r);
   const w = r.w, h = r.h;
@@ -397,7 +397,13 @@ export function textZeilen(bild, r, maxZeilen = 1) {
   const hoechste = Math.max(...laeufe.map((l) => l.b - l.a));
   laeufe = laeufe.filter((l) => l.b - l.a >= hoechste * 0.4);
   if (maxZeilen === 1 && laeufe.length > 1) {
-    laeufe = [laeufe.reduce((m, l) => (l.masse > m.masse ? l : m))];
+    // Zeile, die die Mitte des eigentlichen Rahmens trifft (der Ausschnitt hat
+    // etwas Rand, damit angeschnittener Text nicht verloren geht)
+    const m = mitteY === null ? h / 2 : mitteY;
+    const treffer = laeufe.filter((l) => l.a <= m && l.b >= m);
+    const abstand = (l) => Math.abs((l.a + l.b) / 2 - m);
+    laeufe = [treffer.length ? treffer.reduce((p, q) => (q.masse > p.masse ? q : p))
+      : laeufe.reduce((p, q) => (abstand(q) < abstand(p) ? q : p))];
   } else if (laeufe.length > maxZeilen) {
     laeufe = laeufe.sort((p, q) => q.masse - p.masse).slice(0, maxZeilen).sort((p, q) => p.a - q.a);
   }

@@ -1,0 +1,188 @@
+{
+ "version": 1,
+ "hinweis": "Feldpositionen relativ zur Blattgröße (0..1) des entzerrten Blatts, DIN A5 hochkant (105 × 148 mm). Stand: Nachbau-Formular, NICHT am echten Muster 13 ausgemessen. Mit dem Kalibriermodus anpassen.",
+ "blatt_mm": [
+  105,
+  148
+ ],
+ "felder": [
+  {
+   "id": "nachname",
+   "name": "Nachname",
+   "typ": "text",
+   "art": "name",
+   "x": 0.0429,
+   "y": 0.1081,
+   "w": 0.581,
+   "h": 0.0372
+  },
+  {
+   "id": "vorname",
+   "name": "Vorname",
+   "typ": "text",
+   "art": "name",
+   "x": 0.0429,
+   "y": 0.1453,
+   "w": 0.581,
+   "h": 0.0372
+  },
+  {
+   "id": "geburtsdatum",
+   "name": "Geburtsdatum",
+   "typ": "text",
+   "art": "geburtsdatum",
+   "x": 0.6524,
+   "y": 0.1081,
+   "w": 0.3048,
+   "h": 0.0405
+  },
+  {
+   "id": "ausstellungsdatum",
+   "name": "Ausstellungsdatum",
+   "typ": "text",
+   "art": "ausstellungsdatum",
+   "x": 0.6524,
+   "y": 0.3514,
+   "w": 0.3048,
+   "h": 0.0405
+  },
+  {
+   "id": "icd1",
+   "name": "ICD-10-Code",
+   "typ": "text",
+   "art": "icd",
+   "x": 0.0429,
+   "y": 0.6284,
+   "w": 0.2762,
+   "h": 0.0405
+  },
+  {
+   "id": "icd2",
+   "name": "2. ICD-10-Code",
+   "typ": "text",
+   "art": "icd",
+   "optional": true,
+   "x": 0.3381,
+   "y": 0.6284,
+   "w": 0.2762,
+   "h": 0.0405
+  },
+  {
+   "id": "heilmittel1",
+   "name": "Heilmittel 1",
+   "typ": "text",
+   "art": "heilmittel",
+   "x": 0.0429,
+   "y": 0.8378,
+   "w": 0.6286,
+   "h": 0.0338
+  },
+  {
+   "id": "einheiten1",
+   "name": "Einheiten 1",
+   "typ": "text",
+   "art": "einheiten",
+   "bezug": "heilmittel1",
+   "x": 0.681,
+   "y": 0.8378,
+   "w": 0.1238,
+   "h": 0.0338
+  },
+  {
+   "id": "heilmittel2",
+   "name": "Heilmittel 2",
+   "typ": "text",
+   "art": "heilmittel",
+   "optional": true,
+   "x": 0.0429,
+   "y": 0.8716,
+   "w": 0.6286,
+   "h": 0.0338
+  },
+  {
+   "id": "einheiten2",
+   "name": "Einheiten 2",
+   "typ": "text",
+   "art": "einheiten",
+   "optional": true,
+   "bezug": "heilmittel2",
+   "x": 0.681,
+   "y": 0.8716,
+   "w": 0.1238,
+   "h": 0.0338
+  },
+  {
+   "id": "heilmittel3",
+   "name": "Heilmittel 3",
+   "typ": "text",
+   "art": "heilmittel",
+   "optional": true,
+   "x": 0.0429,
+   "y": 0.9054,
+   "w": 0.6286,
+   "h": 0.0338
+  },
+  {
+   "id": "einheiten3",
+   "name": "Einheiten 3",
+   "typ": "text",
+   "art": "einheiten",
+   "optional": true,
+   "bezug": "heilmittel3",
+   "x": 0.681,
+   "y": 0.9054,
+   "w": 0.1238,
+   "h": 0.0338
+  },
+  {
+   "id": "heilmittel_erg",
+   "name": "Ergänzendes Heilmittel",
+   "typ": "text",
+   "art": "heilmittel",
+   "optional": true,
+   "x": 0.0429,
+   "y": 0.9392,
+   "w": 0.6286,
+   "h": 0.0338
+  },
+  {
+   "id": "einheiten_erg",
+   "name": "Einheiten ergänzend",
+   "typ": "text",
+   "art": "einheiten",
+   "optional": true,
+   "bezug": "heilmittel_erg",
+   "x": 0.681,
+   "y": 0.9392,
+   "w": 0.1238,
+   "h": 0.0338
+  },
+  {
+   "id": "hausbesuch_ja",
+   "name": "Hausbesuch ja",
+   "typ": "kreuz",
+   "x": 0.8286,
+   "y": 0.8851,
+   "w": 0.0333,
+   "h": 0.0236
+  },
+  {
+   "id": "hausbesuch_nein",
+   "name": "Hausbesuch nein",
+   "typ": "kreuz",
+   "x": 0.8952,
+   "y": 0.8851,
+   "w": 0.0333,
+   "h": 0.0236
+  },
+  {
+   "id": "dringend",
+   "name": "Dringlicher Behandlungsbedarf",
+   "typ": "kreuz",
+   "x": 0.8286,
+   "y": 0.9291,
+   "w": 0.0333,
+   "h": 0.0236
+  }
+ ]
+}

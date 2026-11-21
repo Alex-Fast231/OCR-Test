@@ -4,10 +4,11 @@ mit Fantasiedaten und daraus „Fotos“ in verschiedenen Varianten.
 
 Keine echten Rezepte, keine echten Personen. Das Formular ist ein Nachbau mit
 eigenem Layout (DIN A5 hochkant, Vordruck in Blindfarbe Rot, Eintragungen schwarz).
-Die Feldpositionen hier sind die Grundlage von ../schablone-muster13.json.
-Am echten Muster 13 müssen sie mit dem Kalibriermodus nachgemessen werden.
+Die Feldpositionen hier ergeben werkzeuge/schablone-testformular.json (nur für
+den lokalen Test). Die echte Schablone ist am echten Muster 13 kalibriert.
 
-Aufruf:  python3 -I werkzeuge/testbilder.py <ausgabeordner> [--schablone]
+Aufruf:  python3 -I werkzeuge/testbilder.py <ausgabeordner>
+         python3 -I werkzeuge/testbilder.py werkzeuge --schablone   (Test-Schablone)
 Braucht: pillow, numpy
 """
 import json, math, random, sys, os
@@ -359,7 +360,9 @@ def main():
     ziel = sys.argv[1]
     os.makedirs(ziel, exist_ok=True)
     if "--schablone" in sys.argv:
-        with open(os.path.join(ziel, "schablone-muster13.json"), "w", encoding="utf-8") as f:
+        # Schablone des Nachbau-Formulars (nur für den lokalen Test). Die echte
+        # schablone-muster13.json ist am echten Rezept kalibriert und bleibt unberührt.
+        with open(os.path.join(ziel, "schablone-testformular.json"), "w", encoding="utf-8") as f:
             json.dump(schablone(), f, ensure_ascii=False, indent=1)
         return
     random.seed(13)
