@@ -10,7 +10,7 @@ Eine erste Fassung lag in `App-Agent/ocr-test/` (Commit `2f563ba`). Maßgeblich 
 
 ## Änderungen 21.11.2026: Muster 13 ist hochkant
 
-- **Fehler behoben:** Der Prototyp ging von einem Muster 13 im Querformat aus und hat jedes Blatt auf 148 × 105 mm gezogen. Ein hochkant fotografiertes Rezept erschien dadurch quer und verzerrt. Jetzt gilt durchgehend **DIN A5 hochkant, 105 × 148 mm**: Entzerren (1050 × 1480 Pixel), Vorschau, Kalibrierung (Schritte von 0,5 mm), Schablone () und der Testformular-Nachbau.
+- **Fehler behoben:** Der Prototyp ging von einem Muster 13 im Querformat aus und hat jedes Blatt auf 148 × 105 mm gezogen. Ein hochkant fotografiertes Rezept erschien dadurch quer und verzerrt. Jetzt gilt durchgehend **DIN A5 hochkant, 105 × 148 mm**: Entzerren (1050 × 1480 Pixel), Vorschau, Kalibrierung (Schritte von 0,5 mm), Schablone (`blatt_mm: [105, 148]`) und der Testformular-Nachbau.
 - **Lage:** Liegt das Blatt im Foto quer (Handy quer gehalten), werden die Ecken automatisch so gesetzt, dass die lange Seite senkrecht steht. Steht das Blatt auf dem Kopf, findet die Lageprüfung das über Datum und ICD-10 (nach der Kalibrierung).
 - **„Drehen“** dreht jetzt um 180° (auf den Kopf und zurück). Nur wenn der Rahmen gerade quer liegt, dreht der erste Druck um 90°. So wird das Blatt nie verzerrt.
 - **Kalibrier-JSON:** Ein JSON, das vor dieser Änderung im Querformat entstanden ist, passt nicht mehr und muss neu erstellt werden.
