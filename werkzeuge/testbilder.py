@@ -3,7 +3,7 @@
 mit Fantasiedaten und daraus „Fotos“ in verschiedenen Varianten.
 
 Keine echten Rezepte, keine echten Personen. Das Formular ist ein Nachbau mit
-eigenem Layout (Querformat A5, Vordruck in Blindfarbe Rot, Eintragungen schwarz).
+eigenem Layout (DIN A5 hochkant, Vordruck in Blindfarbe Rot, Eintragungen schwarz).
 Die Feldpositionen hier sind die Grundlage von ../schablone-muster13.json.
 Am echten Muster 13 müssen sie mit dem Kalibriermodus nachgemessen werden.
 
@@ -15,7 +15,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 PX = 20  # Pixel je mm beim Zeichnen des Formulars
-BLATT_W, BLATT_H = 148, 105
+BLATT_W, BLATT_H = 105, 148  # Muster 13: DIN A5 hochkant
 ROT = (226, 90, 100)
 SCHWARZ = (20, 20, 24)
 BLAU = (40, 60, 160)
@@ -29,60 +29,59 @@ F_STEMPEL = os.path.join(FONT_DIR, "liberation/LiberationSans-Regular.ttf")
 # ---------------------------------------------------------------- Felder (mm)
 # typ: text | datum | kreuz | tinte ; zeilen: Zeilen im Feld (Text)
 FELDER = [
-    dict(id="nachname", name="Nachname", typ="text", art="name", mm=(5, 16, 52, 5.5)),
-    dict(id="vorname", name="Vorname", typ="text", art="name", mm=(5, 21.5, 52, 5.5)),
-    dict(id="geburtsdatum", name="Geburtsdatum", typ="text", art="geburtsdatum", mm=(59, 16, 21, 5.5)),
-    dict(id="versichertennummer", name="Versicherten-Nr.", typ="text", art="kvnr", mm=(29, 42, 29, 6)),
-    dict(id="ausstellungsdatum", name="Ausstellungsdatum", typ="text", art="ausstellungsdatum", mm=(53, 52, 27, 6)),
-    dict(id="bereich_physio", name="Physiotherapie", typ="kreuz", mm=(86, 16, 3.5, 3.5)),
-    dict(id="bereich_podo", name="Podologische Therapie", typ="kreuz", mm=(86, 21, 3.5, 3.5)),
-    dict(id="bereich_stimm", name="Stimm-/Sprech-/Sprach-/Schlucktherapie", typ="kreuz", mm=(86, 26, 3.5, 3.5)),
-    dict(id="bereich_ergo", name="Ergotherapie", typ="kreuz", mm=(116, 16, 3.5, 3.5)),
-    dict(id="bereich_ernaehrung", name="Ernährungstherapie", typ="kreuz", mm=(116, 21, 3.5, 3.5)),
-    dict(id="gebuehrfrei", name="Gebühr frei", typ="kreuz", mm=(86, 33, 3.5, 3.5)),
-    dict(id="gebuehrpflichtig", name="Gebührenpflichtig", typ="kreuz", mm=(104, 33, 3.5, 3.5)),
-    dict(id="unfall", name="Unfall / Unfallfolgen", typ="kreuz", mm=(120, 33, 3.5, 3.5)),
-    dict(id="bvg", name="BVG", typ="kreuz", mm=(134, 33, 3.5, 3.5)),
-    dict(id="icd1", name="ICD-10-Code", typ="text", art="icd", mm=(5, 63, 25, 6)),
-    dict(id="icd2", name="2. ICD-10-Code", typ="text", art="icd", optional=True, mm=(32, 63, 25, 6)),
-    dict(id="diagnosegruppe", name="Diagnosegruppe", typ="text", art="diagnosegruppe", mm=(60, 63, 16, 6)),
-    dict(id="leitsym_a", name="Leitsymptomatik a", typ="kreuz", mm=(82, 64.5, 3.5, 3.5)),
-    dict(id="leitsym_b", name="Leitsymptomatik b", typ="kreuz", mm=(91, 64.5, 3.5, 3.5)),
-    dict(id="leitsym_c", name="Leitsymptomatik c", typ="kreuz", mm=(100, 64.5, 3.5, 3.5)),
-    dict(id="leitsym_indiv", name="Patientenindividuelle Leitsymptomatik", typ="kreuz", mm=(109, 64.5, 3.5, 3.5)),
-    dict(id="leitsym_text", name="Leitsymptomatik (Text)", typ="text", art="freitext", optional=True, zeilen=2, mm=(5, 71, 104, 8.5)),
-    dict(id="heilmittel1", name="Heilmittel 1", typ="text", art="heilmittel", mm=(5, 82, 66, 5)),
-    dict(id="einheiten1", name="Einheiten 1", typ="text", art="einheiten", bezug="heilmittel1", mm=(73, 82, 13, 5)),
-    dict(id="heilmittel2", name="Heilmittel 2", typ="text", art="heilmittel", optional=True, mm=(5, 87, 66, 5)),
-    dict(id="einheiten2", name="Einheiten 2", typ="text", art="einheiten", optional=True, bezug="heilmittel2", mm=(73, 87, 13, 5)),
-    dict(id="heilmittel3", name="Heilmittel 3", typ="text", art="heilmittel", optional=True, mm=(5, 92, 66, 5)),
-    dict(id="einheiten3", name="Einheiten 3", typ="text", art="einheiten", optional=True, bezug="heilmittel3", mm=(73, 92, 13, 5)),
-    dict(id="heilmittel_erg", name="Ergänzendes Heilmittel", typ="text", art="heilmittel", optional=True, mm=(5, 97, 66, 5)),
-    dict(id="einheiten_erg", name="Einheiten ergänzend", typ="text", art="einheiten", optional=True, bezug="heilmittel_erg", mm=(73, 97, 13, 5)),
-    dict(id="therapiebericht", name="Therapiebericht", typ="kreuz", mm=(90, 82.5, 3.5, 3.5)),
-    dict(id="hausbesuch_ja", name="Hausbesuch ja", typ="kreuz", mm=(90, 88.5, 3.5, 3.5)),
-    dict(id="hausbesuch_nein", name="Hausbesuch nein", typ="kreuz", mm=(104, 88.5, 3.5, 3.5)),
-    dict(id="dringend", name="Dringlicher Behandlungsbedarf", typ="kreuz", mm=(90, 94.5, 3.5, 3.5)),
-    dict(id="arzt", name="Arzt (Stempel)", typ="text", art="arzt", zeilen=4, mm=(112, 72, 32, 20)),
-    dict(id="stempel", name="Stempel vorhanden", typ="tinte", mm=(112, 72, 32, 20)),
-    dict(id="unterschrift", name="Unterschrift vorhanden", typ="tinte", mm=(112, 93, 32, 9)),
+    dict(id="nachname", name="Nachname", typ="text", art="name", mm=(4.5, 16, 61, 5.5)),
+    dict(id="vorname", name="Vorname", typ="text", art="name", mm=(4.5, 21.5, 61, 5.5)),
+    dict(id="geburtsdatum", name="Geburtsdatum", typ="text", art="geburtsdatum", mm=(68.5, 16, 32, 6)),
+    dict(id="versichertennummer", name="Versicherten-Nr.", typ="text", art="kvnr", mm=(30.5, 42, 37, 6)),
+    dict(id="ausstellungsdatum", name="Ausstellungsdatum", typ="text", art="ausstellungsdatum", mm=(68.5, 52, 32, 6)),
+    dict(id="bereich_physio", name="Physiotherapie", typ="kreuz", mm=(4, 61, 3.5, 3.5)),
+    dict(id="bereich_podo", name="Podologische Therapie", typ="kreuz", mm=(4, 65.5, 3.5, 3.5)),
+    dict(id="bereich_stimm", name="Stimm-/Sprech-/Sprach-/Schlucktherapie", typ="kreuz", mm=(4, 70, 3.5, 3.5)),
+    dict(id="bereich_ergo", name="Ergotherapie", typ="kreuz", mm=(4, 74.5, 3.5, 3.5)),
+    dict(id="bereich_ernaehrung", name="Ernährungstherapie", typ="kreuz", mm=(4, 79, 3.5, 3.5)),
+    dict(id="gebuehrfrei", name="Gebühr frei", typ="kreuz", mm=(4, 85, 3.5, 3.5)),
+    dict(id="gebuehrpflichtig", name="Gebührenpflichtig", typ="kreuz", mm=(21, 85, 3.5, 3.5)),
+    dict(id="unfall", name="Unfall / Unfallfolgen", typ="kreuz", mm=(38, 85, 3.5, 3.5)),
+    dict(id="bvg", name="BVG", typ="kreuz", mm=(51, 85, 3.5, 3.5)),
+    dict(id="icd1", name="ICD-10-Code", typ="text", art="icd", mm=(4.5, 93, 29, 6)),
+    dict(id="icd2", name="2. ICD-10-Code", typ="text", art="icd", optional=True, mm=(35.5, 93, 29, 6)),
+    dict(id="diagnosegruppe", name="Diagnosegruppe", typ="text", art="diagnosegruppe", mm=(68.5, 93, 19, 6)),
+    dict(id="leitsym_a", name="Leitsymptomatik a", typ="kreuz", mm=(4, 103.5, 3.5, 3.5)),
+    dict(id="leitsym_b", name="Leitsymptomatik b", typ="kreuz", mm=(14, 103.5, 3.5, 3.5)),
+    dict(id="leitsym_c", name="Leitsymptomatik c", typ="kreuz", mm=(24, 103.5, 3.5, 3.5)),
+    dict(id="leitsym_indiv", name="Patientenindividuelle Leitsymptomatik", typ="kreuz", mm=(34, 103.5, 3.5, 3.5)),
+    dict(id="leitsym_text", name="Leitsymptomatik (Text)", typ="text", art="freitext", optional=True, zeilen=2, mm=(4.5, 111, 96, 8.5)),
+    dict(id="heilmittel1", name="Heilmittel 1", typ="text", art="heilmittel", mm=(4.5, 124, 66, 5)),
+    dict(id="einheiten1", name="Einheiten 1", typ="text", art="einheiten", bezug="heilmittel1", mm=(71.5, 124, 13, 5)),
+    dict(id="heilmittel2", name="Heilmittel 2", typ="text", art="heilmittel", optional=True, mm=(4.5, 129, 66, 5)),
+    dict(id="einheiten2", name="Einheiten 2", typ="text", art="einheiten", optional=True, bezug="heilmittel2", mm=(71.5, 129, 13, 5)),
+    dict(id="heilmittel3", name="Heilmittel 3", typ="text", art="heilmittel", optional=True, mm=(4.5, 134, 66, 5)),
+    dict(id="einheiten3", name="Einheiten 3", typ="text", art="einheiten", optional=True, bezug="heilmittel3", mm=(71.5, 134, 13, 5)),
+    dict(id="heilmittel_erg", name="Ergänzendes Heilmittel", typ="text", art="heilmittel", optional=True, mm=(4.5, 139, 66, 5)),
+    dict(id="einheiten_erg", name="Einheiten ergänzend", typ="text", art="einheiten", optional=True, bezug="heilmittel_erg", mm=(71.5, 139, 13, 5)),
+    dict(id="therapiebericht", name="Therapiebericht", typ="kreuz", mm=(87, 124, 3.5, 3.5)),
+    dict(id="hausbesuch_ja", name="Hausbesuch ja", typ="kreuz", mm=(87, 131, 3.5, 3.5)),
+    dict(id="hausbesuch_nein", name="Hausbesuch nein", typ="kreuz", mm=(94, 131, 3.5, 3.5)),
+    dict(id="dringend", name="Dringlicher Behandlungsbedarf", typ="kreuz", mm=(87, 137.5, 3.5, 3.5)),
+    dict(id="arzt", name="Arzt (Stempel)", typ="text", art="arzt", zeilen=4, mm=(60.5, 60.5, 40, 17)),
+    dict(id="stempel", name="Stempel vorhanden", typ="tinte", mm=(60.5, 60.5, 40, 17)),
+    dict(id="unterschrift", name="Unterschrift vorhanden", typ="tinte", mm=(60.5, 78, 40, 5)),
 ]
 
 # Beschriftungen des Vordrucks (Blindfarbe), mm-Position links oben
 BESCHRIFTUNG = [
-    ("Krankenkasse bzw. Kostenträger", 5, 3.2), ("Name, Vorname des Versicherten", 5, 13.2), ("geb. am", 59, 13.2),
-    ("Kostenträgerkennung", 5, 39.2), ("Versicherten-Nr.", 29, 39.2), ("Status", 59, 39.2),
-    ("Betriebsstätten-Nr.", 5, 49.2), ("Arzt-Nr.", 29, 49.2), ("Datum", 53, 49.2),
-    ("Physiotherapie", 90.5, 16.3), ("Podologische Therapie", 90.5, 21.3), ("Stimm-, Sprech-, Sprach-, Schlucktherapie", 90.5, 26.3),
-    ("Ergotherapie", 120.5, 16.3), ("Ernährungstherapie", 120.5, 21.3),
-    ("Gebühr frei", 90.5, 33.3), ("Gebühr pfl.", 108.5, 33.3), ("Unfall", 124.5, 33.3), ("BVG", 138.5, 33.3),
-    ("Behandlungsrelevante Diagnose(n) ICD-10-Code", 5, 60.2), ("Diagnosegruppe", 60, 60.2), ("Leitsymptomatik", 82, 60.2),
-    ("a", 86, 64.8), ("b", 95, 64.8), ("c", 104, 64.8), ("patientenindiv.", 113, 64.8),
-    ("Leitsymptomatik (patientenindividuell) / Diagnose", 5, 68.2),
-    ("Heilmittel nach Maßgabe des Kataloges", 5, 79.6), ("Behandlungseinheiten", 73, 79.6),
-    ("Therapiebericht", 94.5, 83.1), ("Hausbesuch", 89, 86.0), ("ja", 94.5, 88.9), ("nein", 108.5, 88.9),
-    ("Dringlich", 94.5, 94.4), ("(14 Tage)", 94.5, 96.8),
-    ("Vertragsarztstempel", 112, 69.6), ("Unterschrift des Arztes", 112, 102.4),
+    ("Krankenkasse bzw. Kostenträger", 4, 3.2), ("Name, Vorname des Versicherten", 4, 13.2), ("geb. am", 68, 13.2),
+    ("Kostenträgerkennung", 4, 39.2), ("Versicherten-Nr.", 30, 39.2), ("Status", 68, 39.2),
+    ("Betriebsstätten-Nr.", 4, 49.2), ("Arzt-Nr.", 30, 49.2), ("Datum", 68, 49.2),
+    ("Physiotherapie", 8.5, 61.3), ("Podologische Therapie", 8.5, 65.8), ("Stimm-, Sprech-, Sprach-, Schlucktherapie", 8.5, 70.3),
+    ("Ergotherapie", 8.5, 74.8), ("Ernährungstherapie", 8.5, 79.3), ("Vertragsarztstempel / Unterschrift", 60, 57.6),
+    ("Gebühr frei", 8.5, 85.3), ("Gebühr pfl.", 25.5, 85.3), ("Unfall", 42.5, 85.3), ("BVG", 55.5, 85.3),
+    ("Behandlungsrelevante Diagnose(n) ICD-10-Code", 4, 90.2), ("Diagnosegruppe", 68, 90.2),
+    ("Leitsymptomatik", 4, 100.6), ("a", 8, 103.8), ("b", 18, 103.8), ("c", 28, 103.8), ("patientenindiv.", 38, 103.8),
+    ("Leitsymptomatik (patientenindividuell) / Diagnose", 4, 108.2),
+    ("Heilmittel nach Maßgabe des Kataloges", 4, 121.2), ("Einheiten", 71, 121.2),
+    ("Bericht", 91.5, 124.3), ("Hausbesuch", 87, 128.4), ("ja", 91.5, 131.3), ("nein", 98.3, 131.3),
+    ("Dringlich", 91.5, 137.6), ("(14 Tage)", 91.5, 140.1),
 ]
 
 # ---------------------------------------------------------------- Fantasiedaten
@@ -180,16 +179,17 @@ def formular(d):
     g = ImageDraw.Draw(im)
     fl = font(F_LABEL, 1.9)
     # Titel
-    g.text((mm(86), mm(4)), "Heilmittelverordnung", font=font(F_LABEL_B, 4.2), fill=ROT)
-    g.text((mm(137), mm(10)), "13", font=font(F_LABEL_B, 4.2), fill=ROT)
-    # Kästen der Kopfzone
-    for (x, y, w, h) in [(4, 5.5, 76, 7), (4, 15.5, 76, 23), (4, 41.5, 24, 7), (28, 41.5, 30, 7), (58, 41.5, 22, 7),
-                         (4, 51.5, 24, 7), (28, 51.5, 24, 7), (52, 51.5, 28, 7), (4, 62.5, 27, 7), (31, 62.5, 27, 7),
-                         (59, 62.5, 18, 7), (4, 70.8, 106, 9), (4, 81.5, 68, 20.5), (72, 81.5, 15, 20.5),
-                         (111, 71.5, 34, 30.5)]:
+    g.text((mm(68), mm(3.5)), "Heilmittel-", font=font(F_LABEL_B, 3.6), fill=ROT)
+    g.text((mm(68), mm(8)), "verordnung 13", font=font(F_LABEL_B, 3.6), fill=ROT)
+    # Kästen
+    for (x, y, w, h) in [(3.5, 5.5, 62, 7), (3.5, 15.5, 62, 23), (67.5, 15.5, 34, 7),
+                         (3.5, 41.5, 26, 7), (29.5, 41.5, 38, 7), (67.5, 41.5, 34, 7),
+                         (3.5, 51.5, 26, 7), (29.5, 51.5, 38, 7), (67.5, 51.5, 34, 7),
+                         (59.5, 59.5, 42, 24.5), (3.5, 92.5, 31, 7), (34.5, 92.5, 31, 7), (67.5, 92.5, 21, 7),
+                         (3.5, 110.5, 98, 9.5), (3.5, 123.5, 67, 20.5), (70.5, 123.5, 15, 20.5)]:
         g.rectangle([mm(x), mm(y), mm(x + w), mm(y + h)], outline=ROT, width=3)
-    for y in (86.5, 91.5, 96.5):
-        g.line([mm(4), mm(y), mm(87), mm(y)], fill=ROT, width=2)
+    for y in (128.5, 133.5, 138.5):
+        g.line([mm(3.5), mm(y), mm(85.5), mm(y)], fill=ROT, width=2)
     for f in FELDER:
         if f["typ"] == "kreuz":
             x, y, w, h = f["mm"]
@@ -200,48 +200,48 @@ def formular(d):
     fd = font(F_DRUCK, 3.3)
     def schreib(x, y, t, f=fd):
         g.text((mm(x), mm(y)), t, font=f, fill=SCHWARZ)
-    schreib(5, 7.2, d["kasse"])
-    schreib(5.5, 16.6, d["nachname"])
-    schreib(5.5, 22.1, d["vorname"])
-    schreib(5.5, 27.6, d["strasse"])
-    schreib(5.5, 33.1, d["ort"])
-    schreib(59.5, 16.6, d["geb"])
-    schreib(5, 43.3, d["ktk"])
-    schreib(29.5, 43.3, d["kvnr"])
-    schreib(59, 43.3, d["status"])
-    schreib(5, 53.3, d["bsnr"])
-    schreib(29.5, 53.3, d["lanr"])
-    schreib(54, 53.3, d["datum"])
-    schreib(5.5, 64.3, d["icd1"])
+    schreib(4.5, 7.2, d["kasse"])
+    schreib(5, 16.6, d["nachname"])
+    schreib(5, 22.1, d["vorname"])
+    schreib(5, 27.6, d["strasse"])
+    schreib(5, 33.1, d["ort"])
+    schreib(69, 16.9, d["geb"])
+    schreib(4.5, 43.3, d["ktk"])
+    schreib(31, 43.3, d["kvnr"])
+    schreib(69, 43.3, d["status"])
+    schreib(4.5, 53.3, d["bsnr"])
+    schreib(31, 53.3, d["lanr"])
+    schreib(69, 53.3, d["datum"])
+    schreib(5, 94.3, d["icd1"])
     if d["icd2"]:
-        schreib(32.5, 64.3, d["icd2"])
-    schreib(61, 64.3, d["dg"])
+        schreib(36, 94.3, d["icd2"])
+    schreib(69.5, 94.3, d["dg"])
     if d["lstext"]:
-        schreib(5.5, 72.0, d["lstext"])
+        schreib(5, 112.0, d["lstext"])
     for i, (t, n) in enumerate(d["hm"]):
-        schreib(5.5, 82.6 + 5 * i, t)
-        schreib(76, 82.6 + 5 * i, n)
+        schreib(5, 124.6 + 5 * i, t)
+        schreib(75, 124.6 + 5 * i, n)
     if d["hm_erg"]:
-        schreib(5.5, 97.6, d["hm_erg"][0])
-        schreib(76, 97.6, d["hm_erg"][1])
+        schreib(5, 139.6, d["hm_erg"][0])
+        schreib(75, 139.6, d["hm_erg"][1])
     for k in d["kreuze"]:
         f = next(f for f in FELDER if f["id"] == k)
         x, y, w, h = f["mm"]
         g.line([mm(x + 0.5), mm(y + 0.5), mm(x + w - 0.5), mm(y + h - 0.5)], fill=SCHWARZ, width=6)
         g.line([mm(x + 0.5), mm(y + h - 0.5), mm(x + w - 0.5), mm(y + 0.5)], fill=SCHWARZ, width=6)
     # Stempel (blau, leicht schräg) und Unterschrift
-    st = Image.new("RGBA", (mm(31), mm(20)), (0, 0, 0, 0))
+    st = Image.new("RGBA", (mm(39), mm(17)), (0, 0, 0, 0))
     sg = ImageDraw.Draw(st)
-    fs = font(F_STEMPEL, 2.6)
+    fs = font(F_STEMPEL, 2.4)
     for i, z in enumerate(d["arzt"]):
-        sg.text((mm(0.6), mm(0.8 + 4.4 * i)), z, font=fs, fill=BLAU + (225,))
+        sg.text((mm(0.6), mm(0.6 + 4.0 * i)), z, font=fs, fill=BLAU + (225,))
     st = st.rotate(random.uniform(-1.5, 1.5), resample=Image.BICUBIC, expand=False)
-    im.paste(st, (mm(112), mm(72)), st)
+    im.paste(st, (mm(61), mm(61)), st)
     pts = []
-    x0, y0 = 114, 98.5
+    x0, y0 = 64, 81.5
     for i in range(60):
         t = i / 59
-        pts.append((mm(x0 + 24 * t), mm(y0 - 2.2 * math.sin(t * 11 + random.random()) - 1.2 * t)))
+        pts.append((mm(x0 + 28 * t), mm(y0 - 1.4 * math.sin(t * 11 + random.random()) - 0.8 * t)))
     g.line(pts, fill=BLAU, width=5, joint="curve")
     return im
 
@@ -281,16 +281,18 @@ def woelben(blatt, staerke):
 
 
 def foto(blatt, variante, rng):
-    W, H = (1800, 2400) if variante == "hochkant" else (2400, 1800)
+    # Hochformat-Foto ist normal; "quer": Handy quer gehalten, Blatt liegt im Bild gedreht
+    W, H = (2400, 1800) if variante == "quer" else (1800, 2400)
     if variante == "gewoelbt":
         blatt = woelben(blatt, 0.04)
     bw, bh = blatt.size
-    breite = rng.uniform(0.72, 0.82) * (H if variante == "hochkant" else W)
+    groesse = rng.uniform(0.72, 0.82)
+    breite = groesse * (min(H / bw, W / bh) if variante == "quer" else min(W / bw, H / bh)) * bw
     hoehe = breite * bh / bw
     cx, cy = W / 2 + rng.uniform(-60, 60), H / 2 + rng.uniform(-50, 50)
     ecken = np.array([[-breite / 2, -hoehe / 2], [breite / 2, -hoehe / 2], [breite / 2, hoehe / 2], [-breite / 2, hoehe / 2]])
     winkel = {"gedreht": rng.choice([-1, 1]) * rng.uniform(6, 10),
-              "hochkant": rng.choice([-1, 1]) * 90 + rng.uniform(-3, 3)}.get(variante, rng.uniform(-1.5, 1.5))
+              "quer": rng.choice([-1, 1]) * 90 + rng.uniform(-3, 3)}.get(variante, rng.uniform(-1.5, 1.5))
     a = math.radians(winkel)
     rot = np.array([[math.cos(a), -math.sin(a)], [math.sin(a), math.cos(a)]])
     ecken = ecken @ rot.T
@@ -344,13 +346,13 @@ def schablone():
         felder.append(e)
     return {
         "version": 1,
-        "hinweis": "Feldpositionen relativ zur Blattgröße (0..1) des entzerrten Blatts, Querformat A5. Stand: Nachbau-Formular, NICHT am echten Muster 13 ausgemessen. Mit dem Kalibriermodus anpassen.",
+        "hinweis": "Feldpositionen relativ zur Blattgröße (0..1) des entzerrten Blatts, DIN A5 hochkant (105 × 148 mm). Stand: Nachbau-Formular, NICHT am echten Muster 13 ausgemessen. Mit dem Kalibriermodus anpassen.",
         "blatt_mm": [BLATT_W, BLATT_H],
         "felder": felder,
     }
 
 
-VARIANTEN = ["gerade", "schraeg", "gedreht", "dunkel", "schatten", "unscharf", "hell", "gewoelbt", "hochkant"]
+VARIANTEN = ["gerade", "schraeg", "gedreht", "dunkel", "schatten", "unscharf", "hell", "gewoelbt", "quer"]
 
 
 def main():

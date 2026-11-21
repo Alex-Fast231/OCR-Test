@@ -2,8 +2,9 @@
 // ausschneiden, Ankreuzfelder auswerten, Textzeilen für die Erkennung vorbereiten.
 // Läuft im Web Worker (ocr-worker.js). Alles nur im Arbeitsspeicher.
 
-export const NORM_BREITE = 1480; // entzerrtes Blatt, 10 Pixel je mm (A5 quer)
-export const NORM_HOEHE = 1050;
+// Muster 13 ist DIN A5 hochkant (105 × 148 mm). Entzerrtes Blatt: 10 Pixel je mm.
+export const NORM_BREITE = 1050;
+export const NORM_HOEHE = 1480;
 export const ZEILEN_HOEHE = 48; // Eingabehöhe des Erkennungsmodells
 
 // ------------------------------------------------------------ Hilfen

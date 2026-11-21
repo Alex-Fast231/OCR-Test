@@ -112,11 +112,12 @@ async function neuesBild(bitmap) {
   if (!mitten) mitten = [0, 1, 2, 3].map((i) => [(ecken[i][0] + ecken[(i + 1) % 4][0]) / 2, (ecken[i][1] + ecken[(i + 1) % 4][1]) / 2]);
   ecken = ecken.map(([x, y]) => [x * skal, y * skal]);
   mitten = mitten.map(([x, y]) => [x * skal, y * skal]);
-  // Querformat: die längere Kante soll oben liegen
+  // Muster 13 ist hochkant: die längere Kante soll links und rechts liegen.
+  // Liegt das Blatt im Foto quer, die Ecken um eine Stelle weiterschalten.
   const kante = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
   const quer = kante(ecken[0], ecken[1]) + kante(ecken[3], ecken[2]);
   const hoch = kante(ecken[0], ecken[3]) + kante(ecken[1], ecken[2]);
-  if (hoch > quer * 1.1) { ecken = drehe(ecken, 1); mitten = drehe(mitten, 1); }
+  if (quer > hoch * 1.1) { ecken = drehe(ecken, 1); mitten = drehe(mitten, 1); }
   const vb = await createImageBitmap(vorschau.daten);
   melde({
     typ: "ecken", ecken, mitten, sicher, grund,
@@ -163,7 +164,7 @@ async function leseFeld(blatt, feld) {
 }
 
 // Lage prüfen: Daten und ICD-Code müssen lesbar sein. Wenn nicht, die anderen
-// drei Drehungen versuchen (Blatt verkehrt herum oder quer fotografiert).
+// halbe Drehung versuchen (Blatt auf dem Kopf fotografiert).
 async function lageGuete(blatt, schablone) {
   let punkte = 0;
   for (const feld of schablone.felder) {
@@ -186,7 +187,10 @@ async function auswerten(ecken, mitten, schablone, lageSuchen) {
   if (lageSuchen) {
     const ziel = schablone.felder.filter((f) => ["ausstellungsdatum", "geburtsdatum", "icd"].includes(f.art) && !f.optional).length;
     let beste = await lageGuete(blatt, schablone);
-    for (let k = 1; k < 4 && beste < ziel; k++) {
+    // Hochkant ist schon über das Seitenverhältnis eingestellt; hier nur prüfen,
+    // ob das Blatt auf dem Kopf steht (halbe Drehung).
+    for (const k of [2]) {
+      if (beste >= ziel) break;
       const b2 = entzerre(bild, drehe(ecken, k), NORM_BREITE, NORM_HOEHE, drehe(mitten, k));
       const g = await lageGuete(b2, schablone);
       if (g > beste) { beste = g; blatt = b2; gedreht = k; }

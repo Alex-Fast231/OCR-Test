@@ -265,7 +265,7 @@ function zeichneProbe() {
   const b = zustand.bild;
   if (!vorschauPixel) return;
   const c = $("probeCanvas");
-  const W = 444, H = 315;
+  const W = 300, H = 423; // DIN A5 hochkant
   c.width = W; c.height = H;
   const s = vorschauPixel.width / b.breite;
   const ecken = b.ecken.map(([x, y]) => [x * s, y * s]);
@@ -311,9 +311,21 @@ function bindeZiehen(element, flaeche, beiBewegung, beiEnde) {
 
 function dreheListe(l) { return [l[3], l[0], l[1], l[2]]; }
 
+// Drehen: Das Blatt ist immer hochkant (DIN A5). Liegt der Rahmen gerade quer,
+// eine Vierteldrehung (dann stimmt das Seitenverhältnis), sonst eine halbe
+// Drehung (Blatt stand auf dem Kopf). So wird nie verzerrt.
+function rahmenQuer() {
+  const e = zustand.bild.ecken;
+  const k = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+  return k(e[0], e[1]) + k(e[3], e[2]) > (k(e[0], e[3]) + k(e[1], e[2])) * 1.1;
+}
+
 $("drehenBtn").addEventListener("click", () => {
-  zustand.bild.ecken = dreheListe(zustand.bild.ecken);
-  zustand.bild.mitten = dreheListe(zustand.bild.mitten);
+  const schritte = rahmenQuer() ? 1 : 2;
+  for (let i = 0; i < schritte; i++) {
+    zustand.bild.ecken = dreheListe(zustand.bild.ecken);
+    zustand.bild.mitten = dreheListe(zustand.bild.mitten);
+  }
   zustand.bild.lageSuchen = false; // von Hand gedreht: so lassen
   zeichneEcken();
   zeichneProbe();
@@ -464,7 +476,7 @@ for (const knopf of document.querySelectorAll("[data-schritt]")) {
     const feld = zustand.schablone.felder[i];
     if (!feld) return;
     const [achse, richtung] = knopf.dataset.schritt.split(",");
-    const [bw, bh] = zustand.schablone.blatt_mm || [148, 105];
+    const [bw, bh] = zustand.schablone.blatt_mm || [105, 148];
     const schritt = (achse === "x" || achse === "w" ? 0.5 / bw : 0.5 / bh) * Number(richtung);
     feld[achse] = runde(Math.max(0.003, feld[achse] + schritt));
     feld.x = Math.min(feld.x, 1 - feld.w); feld.y = Math.min(feld.y, 1 - feld.h);

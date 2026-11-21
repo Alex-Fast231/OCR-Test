@@ -8,6 +8,14 @@ Stand 16.11.2026. Anweisung: `PAKET_OCR_PROTOTYP.md` (Chat), Feldauswahl nach R�
 
 Eine erste Fassung lag in `App-Agent/ocr-test/` (Commit `2f563ba`). Maßgeblich ist ab jetzt dieses Repo.
 
+## Änderungen 21.11.2026: Muster 13 ist hochkant
+
+- **Fehler behoben:** Der Prototyp ging von einem Muster 13 im Querformat aus und hat jedes Blatt auf 148 × 105 mm gezogen. Ein hochkant fotografiertes Rezept erschien dadurch quer und verzerrt. Jetzt gilt durchgehend **DIN A5 hochkant, 105 × 148 mm**: Entzerren (1050 × 1480 Pixel), Vorschau, Kalibrierung (Schritte von 0,5 mm), Schablone () und der Testformular-Nachbau.
+- **Lage:** Liegt das Blatt im Foto quer (Handy quer gehalten), werden die Ecken automatisch so gesetzt, dass die lange Seite senkrecht steht. Steht das Blatt auf dem Kopf, findet die Lageprüfung das über Datum und ICD-10 (nach der Kalibrierung).
+- **„Drehen“** dreht jetzt um 180° (auf den Kopf und zurück). Nur wenn der Rahmen gerade quer liegt, dreht der erste Druck um 90°. So wird das Blatt nie verzerrt.
+- **Kalibrier-JSON:** Ein JSON, das vor dieser Änderung im Querformat entstanden ist, passt nicht mehr und muss neu erstellt werden.
+- **Test** mit dem neuen Hochformat-Nachbau, 9 Varianten, darunter „quer“ (Querformat-Foto, Rezept gedreht): 99 % (908 von 918), jede Variante 98–99 %. Dauer am PC im Mittel 1,7 s. Weiter keine Anfragen nach außen, kein Speicherzugriff, keine CSP-Fehler.
+
 ## Änderungen 20.11.2026 (nach den ersten Versuchen von Alex)
 
 - **Foto hochkant kam quer an:** Die Kamera-Funktion des Browsers liefert auf manchen Android-Handys das Foto in Sensorlage. Ist das Kamerabild hochkant und das Foto quer, wird es jetzt um 90° gedreht.
@@ -53,7 +61,7 @@ Weggelassen: Versichertennummer, Arzt-Nr., Betriebsstätten-Nr., Kasse, Diagnose
 | `bild.js` | Bildverarbeitung ohne Bibliothek: Blattsuche, Entzerrung (Homographie), Ankreuzfelder, Zeilen trennen, roten Vordruck ausblenden, Schatten ausgleichen |
 | `pruefung.js` | Plausibilität |
 | `katalog.js` | Kopie aus App-Agent (`HEILMITTEL_KATALOG`, `PRAEFIX_REGELN`, `REZEPT_ITEM_OPTIONS`). Das Original ist unverändert. |
-| `schablone-muster13.json` | Feldpositionen relativ zur Blattgröße |
+| `schablone-muster13.json` | Feldpositionen relativ zur Blattgröße (DIN A5 hochkant) |
 | `werkzeuge/testbilder.py` | erzeugt erfundene Rezepte und „Fotos“ in 6 Varianten |
 | `werkzeuge/test-lokal.mjs` | automatischer Test im Browser (Trefferquote, Dauer, Netz, Speicher, CSP) |
 | `testbilder/` | 4 erfundene Beispielbilder plus erwartete Werte |
