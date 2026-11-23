@@ -175,7 +175,8 @@ def font(pfad, hoehe_mm):
     return ImageFont.truetype(pfad, mm(hoehe_mm))
 
 
-def formular(d):
+def formular(d, versatz=(0.0, 0.0)):
+    ox, oy = versatz  # Druckversatz des Praxisdruckers in mm (nur Eintragungen und Kreuze)
     im = Image.new("RGB", (mm(BLATT_W), mm(BLATT_H)), (253, 252, 250))
     g = ImageDraw.Draw(im)
     fl = font(F_LABEL, 1.9)
@@ -200,7 +201,7 @@ def formular(d):
     # Eintragungen (Drucker, schwarz)
     fd = font(F_DRUCK, 3.3)
     def schreib(x, y, t, f=fd):
-        g.text((mm(x), mm(y)), t, font=f, fill=SCHWARZ)
+        g.text((mm(x + ox), mm(y + oy)), t, font=f, fill=SCHWARZ)
     schreib(4.5, 7.2, d["kasse"])
     schreib(5, 16.6, d["nachname"])
     schreib(5, 22.1, d["vorname"])
@@ -228,6 +229,7 @@ def formular(d):
     for k in d["kreuze"]:
         f = next(f for f in FELDER if f["id"] == k)
         x, y, w, h = f["mm"]
+        x += ox; y += oy
         g.line([mm(x + 0.5), mm(y + 0.5), mm(x + w - 0.5), mm(y + h - 0.5)], fill=SCHWARZ, width=6)
         g.line([mm(x + 0.5), mm(y + h - 0.5), mm(x + w - 0.5), mm(y + 0.5)], fill=SCHWARZ, width=6)
     # Stempel (blau, leicht schräg) und Unterschrift
@@ -353,7 +355,7 @@ def schablone():
     }
 
 
-VARIANTEN = ["gerade", "schraeg", "gedreht", "dunkel", "schatten", "unscharf", "hell", "gewoelbt", "quer"]
+VARIANTEN = ["gerade", "schraeg", "gedreht", "dunkel", "schatten", "unscharf", "hell", "gewoelbt", "quer", "versetzt"]
 
 
 def main():
@@ -373,7 +375,10 @@ def main():
         blatt.save(os.path.join(ziel, f"{d['id']}-blatt.png"))
         for v in VARIANTEN:
             name = f"{d['id']}-{v}.jpg"
-            foto(blatt, v, rng).save(os.path.join(ziel, name), quality=88)
+            b = blatt
+            if v == "versetzt":  # Praxisdrucker druckt um ein paar mm versetzt
+                b = formular(d, (rng.choice([-1, 1]) * rng.uniform(1.5, 3.5), rng.choice([-1, 1]) * rng.uniform(1.0, 2.5)))
+            foto(b, v, rng).save(os.path.join(ziel, name), quality=88)
             wahrheit.append({"datei": name, "datensatz": d["id"], "variante": v, "erwartet": erwartet(d)})
     with open(os.path.join(ziel, "wahrheit.json"), "w", encoding="utf-8") as f:
         json.dump(wahrheit, f, ensure_ascii=False, indent=1)

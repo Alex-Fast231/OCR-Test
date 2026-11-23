@@ -7,6 +7,7 @@ import {
 } from "./bild.js";
 import { kantenBild, findeViereck, findeMitten } from "./kanten.js";
 import { pruefeDatum, pruefeIcd } from "./pruefung.js";
+import { ausrichten, ausgerichtet } from "./ausrichten.js";
 
 const MAX_KANTE = 3200;      // größere Fotos werden verkleinert
 const SUCH_KANTE = 800;      // Bildgröße für die Blattsuche
@@ -149,8 +150,8 @@ async function erkenneZeile(zeile) {
   return ctcDekodieren(t.data, schritte, klassen);
 }
 
-async function leseFeld(blatt, feld) {
-  const r = feldRechteck(feld);
+async function leseFeld(blatt, feld, ausrichtung) {
+  const r = feldRechteck(ausgerichtet(feld, ausrichtung));
   const ausschnitt = ausschnittRGBA(blatt, r, 6);
   const e = { id: feld.id, ausschnitt };
   if (feld.typ === "kreuz") {
@@ -170,11 +171,11 @@ async function leseFeld(blatt, feld) {
 
 // Lage prüfen: Daten und ICD-Code müssen lesbar sein. Wenn nicht, die anderen
 // halbe Drehung versuchen (Blatt auf dem Kopf fotografiert).
-async function lageGuete(blatt, schablone) {
+async function lageGuete(blatt, schablone, ausrichtung) {
   let punkte = 0;
   for (const feld of schablone.felder) {
     if (!["ausstellungsdatum", "geburtsdatum", "icd"].includes(feld.art) || feld.optional) continue;
-    const e = await leseFeld(blatt, feld);
+    const e = await leseFeld(blatt, feld, ausrichtung);
     const text = e.zeilen.map((z) => z.text).join(" ").trim();
     if (!text) continue;
     const b = feld.art === "icd" ? pruefeIcd(text) : pruefeDatum(text, feld.art);
@@ -187,27 +188,29 @@ async function auswerten(ecken, mitten, schablone, lageSuchen) {
   if (!bild) throw new Error("Kein Bild vorhanden");
   if (!sitzung) throw new Error("Erkennung ist noch nicht geladen");
   const t0 = performance.now();
+  const mm = schablone.blatt_mm || [105, 148];
   let blatt = entzerre(bild, ecken, NORM_BREITE, NORM_HOEHE, mitten);
+  let ausrichtung = ausrichten(blatt, schablone.felder, mm);
   let gedreht = 0;
   if (lageSuchen) {
     const ziel = schablone.felder.filter((f) => ["ausstellungsdatum", "geburtsdatum", "icd"].includes(f.art) && !f.optional).length;
-    let beste = await lageGuete(blatt, schablone);
+    let beste = await lageGuete(blatt, schablone, ausrichtung);
     // Hochkant ist schon über das Seitenverhältnis eingestellt; hier nur prüfen,
     // ob das Blatt auf dem Kopf steht (halbe Drehung).
-    for (const k of [2]) {
-      if (beste >= ziel) break;
-      const b2 = entzerre(bild, drehe(ecken, k), NORM_BREITE, NORM_HOEHE, drehe(mitten, k));
-      const g = await lageGuete(b2, schablone);
-      if (g > beste) { beste = g; blatt = b2; gedreht = k; }
+    if (beste < ziel) {
+      const b2 = entzerre(bild, drehe(ecken, 2), NORM_BREITE, NORM_HOEHE, drehe(mitten, 2));
+      const a2 = ausrichten(b2, schablone.felder, mm);
+      const g = await lageGuete(b2, schablone, a2);
+      if (g > beste) { blatt = b2; ausrichtung = a2; gedreht = 2; }
     }
   }
   const t1 = performance.now();
   const felder = [];
-  for (const feld of schablone.felder) felder.push(await leseFeld(blatt, feld));
+  for (const feld of schablone.felder) felder.push(await leseFeld(blatt, feld, ausrichtung));
   const t2 = performance.now();
   const entzerrt = await createImageBitmap(blatt);
   melde({
-    typ: "ergebnis", felder, entzerrt, gedreht,
+    typ: "ergebnis", felder, entzerrt, gedreht, ausrichtung,
     zeiten: { entzerren: t1 - t0, erkennung: t2 - t1 }
   }, [entzerrt, ...felder.map((f) => f.ausschnitt.data.buffer)]);
 }

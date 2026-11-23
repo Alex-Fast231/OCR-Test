@@ -4,6 +4,7 @@
 // Erkannter Text wird nur über textContent angezeigt.
 import { bewerte } from "./pruefung.js";
 import { verzerrung } from "./bild.js";
+import { ausgerichtet, zurueck } from "./ausrichten.js";
 
 const $ = (id) => document.getElementById(id);
 const BEREICHE = ["start", "kamera", "ecken", "ergebnis", "kalibrierung"];
@@ -389,8 +390,12 @@ function zeigeErgebnis(n) {
     rezept = zustand.ergebnis.rezept;
     rezept.zeiten = zeiten;
   }
-  zustand.ergebnis = { felder: n.felder, entzerrt: n.entzerrt, zeiten, rezept, wiederholung: false };
-  $("ergebnisZeiten").textContent = `Entzerren ${sek(zeiten.entzerren)} · Erkennung ${sek(zeiten.erkennung)} · gesamt ${sek(zeiten.gesamt)}`;
+  zustand.ergebnis = { felder: n.felder, entzerrt: n.entzerrt, zeiten, rezept, wiederholung: false, ausrichtung: n.ausrichtung };
+  const a = n.ausrichtung;
+  const ausgleich = a && (a.dxMm || a.dyMm || a.s !== 1)
+    ? ` · Druck ausgeglichen: ${a.dxMm > 0 ? "→" : "←"} ${Math.abs(a.dxMm).toFixed(1).replace(".", ",")} mm, ${a.dyMm > 0 ? "↓" : "↑"} ${Math.abs(a.dyMm).toFixed(1).replace(".", ",")} mm${a.s !== 1 ? `, Größe ${Math.round(a.s * 100)} %` : ""}`
+    : "";
+  $("ergebnisZeiten").textContent = `Entzerren ${sek(zeiten.entzerren)} · Erkennung ${sek(zeiten.erkennung)} · gesamt ${sek(zeiten.gesamt)}${ausgleich}`;
   zeichneFelder();
   zeige("ergebnis");
   aktualisiereAuswertung();
@@ -506,9 +511,20 @@ $("kalibrierBtn").addEventListener("click", () => {
     r.append(el("div", "name", feld.name));
     const griff = el("div", "groesse");
     r.append(griff);
+    // Angezeigt wird der Rahmen so, wie er bei diesem Rezept gelesen wurde
+    // (mit automatischem Ausgleich). Gespeichert werden die Grundwerte.
+    const A = () => zustand.ergebnis && zustand.ergebnis.ausrichtung;
     const setze = () => {
-      r.style.left = feld.x * 100 + "%"; r.style.top = feld.y * 100 + "%";
-      r.style.width = feld.w * 100 + "%"; r.style.height = feld.h * 100 + "%";
+      const d = ausgerichtet(feld, A());
+      r.style.left = d.x * 100 + "%"; r.style.top = d.y * 100 + "%";
+      r.style.width = d.w * 100 + "%"; r.style.height = d.h * 100 + "%";
+    };
+    const uebernimm = (x, y, w, h) => {
+      const g = zurueck(x, y, w, h, A());
+      feld.x = runde(Math.min(1 - g.w, Math.max(0, g.x)));
+      feld.y = runde(Math.min(1 - g.h, Math.max(0, g.y)));
+      feld.w = runde(Math.max(0.005, g.w));
+      feld.h = runde(Math.max(0.005, g.h));
     };
     setze();
     let versatz = null;
@@ -516,17 +532,18 @@ $("kalibrierBtn").addEventListener("click", () => {
     r.addEventListener("pointerdown", (e) => {
       waehleRahmen(index);
       const fl = flaeche.getBoundingClientRect();
-      versatz = [(e.clientX - fl.left) / fl.width - feld.x, (e.clientY - fl.top) / fl.height - feld.y];
+      const d = ausgerichtet(feld, A());
+      versatz = [(e.clientX - fl.left) / fl.width - d.x, (e.clientY - fl.top) / fl.height - d.y];
     });
     bindeZiehen(r, flaeche, (px, py, ev) => {
       if (ev.target === griff || !versatz) return;
-      feld.x = runde(Math.min(1 - feld.w, Math.max(0, px - versatz[0])));
-      feld.y = runde(Math.min(1 - feld.h, Math.max(0, py - versatz[1])));
+      const d = ausgerichtet(feld, A());
+      uebernimm(px - versatz[0], py - versatz[1], d.w, d.h);
       setze();
     });
     bindeZiehen(griff, flaeche, (px, py) => {
-      feld.w = runde(Math.max(0.005, px - feld.x));
-      feld.h = runde(Math.max(0.005, py - feld.y));
+      const d = ausgerichtet(feld, A());
+      uebernimm(d.x, d.y, Math.max(0.005, px - d.x), Math.max(0.005, py - d.y));
       setze();
     });
     griff.addEventListener("pointerdown", (e) => e.stopPropagation());

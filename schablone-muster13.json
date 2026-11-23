@@ -1,6 +1,6 @@
 {
  "version": 1,
- "hinweis": "Feldpositionen relativ zur Blattgröße (0..1) des entzerrten Blatts, DIN A5 hochkant (105 × 148 mm). Am echten Muster 13 kalibriert von Alex (Stand 23.11.2026).",
+ "hinweis": "Feldpositionen relativ zur Blattgröße (0..1) des entzerrten Blatts, DIN A5 hochkant (105 × 148 mm). Am echten Muster 13 kalibriert von Alex (Stand 23.11.2026, dritte Fassung). Beim Lesen werden die Rahmen automatisch auf den Druck ausgerichtet (ausrichten.js).",
  "blatt_mm": [
   105,
   148
@@ -11,8 +11,8 @@
    "name": "Nachname",
    "typ": "text",
    "art": "name",
-   "x": 0.0565,
-   "y": 0.0875,
+   "x": 0.0534,
+   "y": 0.0883,
    "w": 0.3302,
    "h": 0.0232
   },
@@ -51,8 +51,8 @@
    "name": "ICD-10-Code",
    "typ": "text",
    "art": "icd",
-   "x": 0.0566,
-   "y": 0.2849,
+   "x": 0.0515,
+   "y": 0.2869,
    "w": 0.1323,
    "h": 0.0272
   },
@@ -62,8 +62,8 @@
    "typ": "text",
    "art": "icd",
    "optional": true,
-   "x": 0.0557,
-   "y": 0.3158,
+   "x": 0.0531,
+   "y": 0.317,
    "w": 0.1433,
    "h": 0.0235
   },
@@ -72,8 +72,8 @@
    "name": "Heilmittel 1",
    "typ": "text",
    "art": "heilmittel",
-   "x": 0.0506,
-   "y": 0.4956,
+   "x": 0.0515,
+   "y": 0.4949,
    "w": 0.5417,
    "h": 0.0296
   },
@@ -161,8 +161,8 @@
    "id": "hausbesuch_ja",
    "name": "Hausbesuch ja",
    "typ": "kreuz",
-   "x": 0.4293,
-   "y": 0.6461,
+   "x": 0.4143,
+   "y": 0.6457,
    "w": 0.0333,
    "h": 0.0236
   },
@@ -170,8 +170,8 @@
    "id": "hausbesuch_nein",
    "name": "Hausbesuch nein",
    "typ": "kreuz",
-   "x": 0.5146,
-   "y": 0.6468,
+   "x": 0.4991,
+   "y": 0.644,
    "w": 0.0333,
    "h": 0.0236
   },
@@ -179,8 +179,8 @@
    "id": "dringend",
    "name": "Dringlicher Behandlungsbedarf",
    "typ": "kreuz",
-   "x": 0.0665,
-   "y": 0.6925,
+   "x": 0.0541,
+   "y": 0.6877,
    "w": 0.0333,
    "h": 0.0236
   }

@@ -8,6 +8,14 @@ Stand 16.11.2026. Anweisung: `PAKET_OCR_PROTOTYP.md` (Chat), Feldauswahl nach R�
 
 Eine erste Fassung lag in `App-Agent/ocr-test/` (Commit `2f563ba`). Maßgeblich ist ab jetzt dieses Repo.
 
+## Änderungen 23.11.2026: automatische Ausrichtung auf den Druck
+
+- **Problem bei Alex:** Nach jeder Kalibrierung lagen die Rahmen beim nächsten Rezept wieder daneben, mal links, mal rechts, besonders die Kästchen Hausbesuch ja/nein und Dringlich. Die Rahmen selbst ändern sich nicht. Was sich verschiebt, ist der **Druck**: Die Praxisdrucker bedrucken den vorgedruckten Bogen je nach Einzug ein paar Millimeter versetzt, dazu kommen kleine Abweichungen beim Setzen der Ecken.
+- **Lösung (`ausrichten.js`):** Bei jedem Rezept wird gesucht, wie weit der schwarze Druck versetzt ist (± 5 mm in 0,5-mm-Schritten, Größe 97–103 %). Gewählt wird die Lage, bei der möglichst viel Schrift in den Rahmen liegt, wenig direkt daneben und der Text am linken Rahmenrand beginnt. Der rote Vordruck, Schattenkanten und die äußeren 3 mm (oft Tisch) zählen nicht. Alle Rahmen werden gemeinsam verschoben. Nur wenn das deutlich besser passt, wird verschoben.
+- Im Ergebnis steht der Ausgleich, z. B. „Druck ausgeglichen: → 3,0 mm, ↑ 1,0 mm“. Der Kalibriermodus zeigt die Rahmen so, wie sie bei diesem Rezept gelesen wurden. Gespeichert und ausgegeben werden aber die Grundwerte ohne Ausgleich. Rahmen, die man an einem versetzten Rezept nachzieht, passen deshalb auch für die anderen.
+- Schablone mit dem dritten JSON von Alex ersetzt.
+- **Test:** neue Variante „versetzt“ (Druck um 1,5–3,5 mm waagerecht und 1–2,5 mm senkrecht verschoben). 60 Bilder × 17 Felder: 99 % (1007 von 1020), jede Variante 98–99 %, „versetzt“ 98 %. Weiter keine Anfragen nach außen, kein Speicherzugriff, keine CSP-Fehler.
+
 ## Änderungen 23.11.2026: zweite Kalibrierung von Alex
 
 - `schablone-muster13.json` mit der neuen Kalibrierung von Alex ersetzt (nach mehreren echten Rezepten, die Felder liegen weiter links als bei der ersten).
@@ -69,6 +77,7 @@ Weggelassen: Versichertennummer, Arzt-Nr., Betriebsstätten-Nr., Kasse, Diagnose
 | --- | --- |
 | `index.html`, `app.css`, `app.js` | Oberfläche: Kamera/Galerie, Ecken verschieben, Ergebnis mit Ampel, stimmt/falsch, Kalibriermodus, Auswertung, „Alles löschen“ |
 | `ocr-worker.js` | Web Worker: Blatt finden, entzerren, Felder ausschneiden, Erkennung (onnxruntime-web, WASM) |
+| `ausrichten.js` | Rahmen je Rezept automatisch auf den versetzten Druck ausrichten |
 | `kanten.js` | Blattränder über Kanten (Hough-Geraden, Blattrand-Prüfung, Kantenmitten) |
 | `bild.js` | Bildverarbeitung ohne Bibliothek: Blattsuche, Entzerrung (Homographie), Ankreuzfelder, Zeilen trennen, roten Vordruck ausblenden, Schatten ausgleichen |
 | `pruefung.js` | Plausibilität |
