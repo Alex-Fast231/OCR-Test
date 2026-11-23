@@ -8,6 +8,11 @@ Stand 16.11.2026. Anweisung: `PAKET_OCR_PROTOTYP.md` (Chat), Feldauswahl nach R�
 
 Eine erste Fassung lag in `App-Agent/ocr-test/` (Commit `2f563ba`). Maßgeblich ist ab jetzt dieses Repo.
 
+## Änderungen 23.11.2026: zweite Kalibrierung von Alex
+
+- `schablone-muster13.json` mit der neuen Kalibrierung von Alex ersetzt (nach mehreren echten Rezepten, die Felder liegen weiter links als bei der ersten).
+- Seitlicher Spielraum für Textfelder von 1 mm auf 2 mm erhöht, weil der Aufdruck je nach Praxisdrucker versetzt sitzt.
+
 ## Änderungen 21.11.2026: Kalibrierung von Alex eingetragen
 
 - `schablone-muster13.json` enthält jetzt die Feldpositionen, die Alex am echten Muster 13 kalibriert hat (17 Felder, nur Zahlen).

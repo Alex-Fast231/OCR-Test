@@ -1,6 +1,6 @@
 {
  "version": 1,
- "hinweis": "Feldpositionen relativ zur Blattgröße (0..1) des entzerrten Blatts, DIN A5 hochkant (105 × 148 mm). Am echten Muster 13 kalibriert von Alex (21.11.2026).",
+ "hinweis": "Feldpositionen relativ zur Blattgröße (0..1) des entzerrten Blatts, DIN A5 hochkant (105 × 148 mm). Am echten Muster 13 kalibriert von Alex (Stand 23.11.2026).",
  "blatt_mm": [
   105,
   148
@@ -11,50 +11,50 @@
    "name": "Nachname",
    "typ": "text",
    "art": "name",
-   "x": 0.1165,
-   "y": 0.088,
-   "w": 0.2298,
-   "h": 0.0241
+   "x": 0.0565,
+   "y": 0.0875,
+   "w": 0.3302,
+   "h": 0.0232
   },
   {
    "id": "vorname",
    "name": "Vorname",
    "typ": "text",
    "art": "name",
-   "x": 0.1176,
-   "y": 0.1117,
-   "w": 0.2259,
-   "h": 0.0244
+   "x": 0.0561,
+   "y": 0.1099,
+   "w": 0.334,
+   "h": 0.0233
   },
   {
    "id": "geburtsdatum",
    "name": "Geburtsdatum",
    "typ": "text",
    "art": "geburtsdatum",
-   "x": 0.4926,
-   "y": 0.1159,
-   "w": 0.1572,
-   "h": 0.031
+   "x": 0.4479,
+   "y": 0.1042,
+   "w": 0.145,
+   "h": 0.0278
   },
   {
    "id": "ausstellungsdatum",
    "name": "Ausstellungsdatum",
    "typ": "text",
    "art": "ausstellungsdatum",
-   "x": 0.4837,
-   "y": 0.2302,
-   "w": 0.1625,
-   "h": 0.0276
+   "x": 0.4305,
+   "y": 0.2287,
+   "w": 0.1595,
+   "h": 0.0246
   },
   {
    "id": "icd1",
    "name": "ICD-10-Code",
    "typ": "text",
    "art": "icd",
-   "x": 0.1125,
-   "y": 0.2854,
-   "w": 0.134,
-   "h": 0.0268
+   "x": 0.0566,
+   "y": 0.2849,
+   "w": 0.1323,
+   "h": 0.0272
   },
   {
    "id": "icd2",
@@ -62,20 +62,20 @@
    "typ": "text",
    "art": "icd",
    "optional": true,
-   "x": 0.1083,
-   "y": 0.3145,
-   "w": 0.1387,
-   "h": 0.0253
+   "x": 0.0557,
+   "y": 0.3158,
+   "w": 0.1433,
+   "h": 0.0235
   },
   {
    "id": "heilmittel1",
    "name": "Heilmittel 1",
    "typ": "text",
    "art": "heilmittel",
-   "x": 0.106,
-   "y": 0.4935,
-   "w": 0.3644,
-   "h": 0.0262
+   "x": 0.0506,
+   "y": 0.4956,
+   "w": 0.5417,
+   "h": 0.0296
   },
   {
    "id": "einheiten1",
@@ -83,10 +83,10 @@
    "typ": "text",
    "art": "einheiten",
    "bezug": "heilmittel1",
-   "x": 0.8443,
-   "y": 0.4951,
-   "w": 0.1231,
-   "h": 0.0246
+   "x": 0.8162,
+   "y": 0.4934,
+   "w": 0.1097,
+   "h": 0.0217
   },
   {
    "id": "heilmittel2",
@@ -94,10 +94,10 @@
    "typ": "text",
    "art": "heilmittel",
    "optional": true,
-   "x": 0.1063,
-   "y": 0.5235,
-   "w": 0.367,
-   "h": 0.0271
+   "x": 0.0537,
+   "y": 0.5263,
+   "w": 0.5432,
+   "h": 0.0256
   },
   {
    "id": "einheiten2",
@@ -106,10 +106,10 @@
    "art": "einheiten",
    "optional": true,
    "bezug": "heilmittel2",
-   "x": 0.8415,
-   "y": 0.5235,
-   "w": 0.1284,
-   "h": 0.026
+   "x": 0.8146,
+   "y": 0.5229,
+   "w": 0.1094,
+   "h": 0.0222
   },
   {
    "id": "heilmittel3",
@@ -117,10 +117,10 @@
    "typ": "text",
    "art": "heilmittel",
    "optional": true,
-   "x": 0.1043,
-   "y": 0.5508,
-   "w": 0.3718,
-   "h": 0.0295
+   "x": 0.0519,
+   "y": 0.5578,
+   "w": 0.5465,
+   "h": 0.0255
   },
   {
    "id": "einheiten3",
@@ -129,10 +129,10 @@
    "art": "einheiten",
    "optional": true,
    "bezug": "heilmittel3",
-   "x": 0.8421,
-   "y": 0.5528,
-   "w": 0.1269,
-   "h": 0.0257
+   "x": 0.814,
+   "y": 0.5525,
+   "w": 0.1136,
+   "h": 0.0218
   },
   {
    "id": "heilmittel_erg",
@@ -140,10 +140,10 @@
    "typ": "text",
    "art": "heilmittel",
    "optional": true,
-   "x": 0.1048,
-   "y": 0.6005,
-   "w": 0.3535,
-   "h": 0.0315
+   "x": 0.0559,
+   "y": 0.602,
+   "w": 0.5497,
+   "h": 0.0307
   },
   {
    "id": "einheiten_erg",
@@ -152,37 +152,37 @@
    "art": "einheiten",
    "optional": true,
    "bezug": "heilmittel_erg",
-   "x": 0.841,
-   "y": 0.6046,
-   "w": 0.1226,
+   "x": 0.8133,
+   "y": 0.6002,
+   "w": 0.1118,
    "h": 0.0251
   },
   {
    "id": "hausbesuch_ja",
    "name": "Hausbesuch ja",
    "typ": "kreuz",
-   "x": 0.4646,
-   "y": 0.6466,
-   "w": 0.0443,
-   "h": 0.0259
+   "x": 0.4293,
+   "y": 0.6461,
+   "w": 0.0333,
+   "h": 0.0236
   },
   {
    "id": "hausbesuch_nein",
    "name": "Hausbesuch nein",
    "typ": "kreuz",
-   "x": 0.552,
-   "y": 0.6471,
-   "w": 0.0386,
-   "h": 0.0276
+   "x": 0.5146,
+   "y": 0.6468,
+   "w": 0.0333,
+   "h": 0.0236
   },
   {
    "id": "dringend",
    "name": "Dringlicher Behandlungsbedarf",
    "typ": "kreuz",
-   "x": 0.109,
-   "y": 0.6854,
-   "w": 0.0386,
-   "h": 0.0248
+   "x": 0.0665,
+   "y": 0.6925,
+   "w": 0.0333,
+   "h": 0.0236
   }
  ]
 }
