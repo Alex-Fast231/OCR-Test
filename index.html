@@ -3,131 +3,67 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self'; img-src 'self' blob: data:; media-src 'self' blob:; worker-src 'self' blob:; style-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; connect-src 'self'; img-src 'self' blob: data:; media-src 'self' blob:; style-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="robots" content="noindex, nofollow">
-<title>OCR-Prototyp Muster 13</title>
-<link rel="stylesheet" href="app.css">
-<script type="module" src="app.js"></script>
+<title>Rezept-Barcode Test</title>
+<link rel="stylesheet" href="barcode.css">
 </head>
 <body>
-<header class="kopf">
-  <h1>OCR-Prototyp Muster 13</h1>
-  <p class="klein">Testversion. Bilder und Ergebnisse bleiben nur im Arbeitsspeicher und sind nach dem Schließen oder Neuladen weg. Nichts wird gesendet oder gespeichert.</p>
-  <div id="ladeZeile" class="ladezeile">
-    <progress id="ladeBalken" max="1" value="0"></progress>
-    <span id="ladeText">Erkennung wird geladen …</span>
+<header class="band"><div class="wrap">
+  <h1>Rezept-Barcode testen</h1>
+  <p>Fotografiere den Barcode unten rechts auf einer Heilmittelverordnung (Muster 13). Die Seite liest ihn auf dem Gerät aus. Nichts wird gespeichert oder verschickt.</p>
+  <button type="button" class="pick live" id="liveBtn"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8V5h3M17 5h3v3M20 16v3h-3M7 19H4v-3"/><path d="M8 12h8"/></svg>Live-Kamera: Barcode ins Bild halten</button>
+  <div id="liveBox" hidden><video id="vid" playsinline muted></video><div id="liveMsg">Barcode in den Rahmen halten …</div><button type="button" id="liveStop">Kamera aus</button></div>
+  <div class="picks">
+    <label class="pick alt"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Foto aufnehmen<input id="cam" type="file" accept="image/*" capture="environment"></label>
+    <label class="pick alt">Bild aus Galerie<input id="gal" type="file" accept="image/*"></label>
   </div>
-</header>
+  <div id="busy" hidden>Lese Barcode …</div>
+  <div id="dec"></div>
+</div></header>
 
-<main>
-  <section id="start" class="karte">
-    <h2>Rezept aufnehmen</h2>
-    <div class="knoepfe">
-      <button id="kameraBtn" type="button">📷 Kamera</button>
-      <label class="knopf zweit" for="dateiWahl">🖼 Bild wählen</label>
-      <input id="dateiWahl" class="unsichtbar" type="file" accept="image/*">
-    </div>
-    <p id="startMeldung" class="meldung"></p>
-  </section>
+<section class="band" id="out" hidden><div class="wrap">
+  <div class="card" id="outCard">
+    <h2 id="outHead"></h2>
+    <div class="meta" id="outMeta"></div>
+    <ul id="warn"></ul>
+    <table><tbody id="main"></tbody></table>
+    <details><summary>Alle 33 Barcode-Felder</summary><table><tbody id="raw"></tbody></table></details>
+    <div class="row"><button type="button" id="clear">Ergebnis löschen</button></div>
+  </div>
+</div></section>
 
-  <section id="kamera" class="karte versteckt">
-    <h2>Kamera</h2>
-    <p class="klein">Rezept flach hinlegen, ganz im Bild, möglichst gerade von oben.</p>
-    <video id="video" class="video" autoplay playsinline muted></video>
-    <div class="knoepfe">
-      <button id="ausloesenBtn" type="button">Auslösen</button>
-      <button id="kameraAbbrechenBtn" type="button" class="zweit">Abbrechen</button>
-    </div>
-  </section>
-
-  <section id="ecken" class="karte versteckt">
-    <h2>Blattecken</h2>
-    <p id="eckenHinweis" class="klein">Die Punkte 1–4 auf die Blattecken ziehen, falls die Automatik danebenliegt. Die kleinen Punkte in der Mitte jeder Kante auf den Blattrand ziehen, wenn das Blatt gewölbt ist. Beim Ziehen erscheint eine Lupe.</p>
-    <div id="eckenFlaeche" class="flaeche">
-      <canvas id="eckenCanvas"></canvas>
-      <canvas id="lupe" class="lupe versteckt" width="280" height="280"></canvas>
-    </div>
-    <p class="klein">So wird das Blatt gelesen (steht es auf dem Kopf, „Drehen“ antippen):</p>
-    <canvas id="probeCanvas" class="probe"></canvas>
-    <div class="knoepfe">
-      <button id="auswertenBtn" type="button">Auswerten</button>
-      <button id="drehenBtn" type="button" class="zweit">↻ Drehen</button>
-      <button id="geradeBtn" type="button" class="zweit">Kanten gerade</button>
-      <button id="eckenZurueckBtn" type="button" class="zweit">Verwerfen</button>
-    </div>
-    <p id="eckenMeldung" class="meldung"></p>
-  </section>
-
-  <section id="ergebnis" class="karte versteckt">
-    <h2>Ergebnis</h2>
-    <p id="ergebnisZeiten" class="klein"></p>
-    <div class="regler">
-      <label for="schwelle">Schwelle Ankreuzfelder: <span id="schwelleWert"></span></label>
-      <input id="schwelle" type="range" min="0.02" max="0.4" step="0.01" value="0.1">
-    </div>
-    <div id="felderListe" class="felder"></div>
-    <div class="knoepfe">
-      <button id="naechstesBtn" type="button">Nächstes Rezept</button>
-      <button id="kalibrierBtn" type="button" class="zweit">Kalibriermodus</button>
-    </div>
-  </section>
-
-  <section id="kalibrierung" class="karte versteckt">
-    <h2>Kalibriermodus</h2>
-    <p class="klein">Feldrahmen über dem entzerrten Blatt verschieben (ziehen) und in der Größe ändern (rotes Quadrat rechts unten). Ist das Blatt schief oder gewölbt, zuerst „Ecken nachziehen“. Die Änderung gilt nur in dieser Sitzung. Das JSON enthält nur Feldkennungen und Zahlen, keine Namen oder Rezeptdaten.</p>
-    <div class="regler">
-      <label for="zoom">Vergrößerung</label>
-      <select id="zoom">
-        <option value="1">1×</option>
-        <option value="2">2×</option>
-        <option value="3">3×</option>
-        <option value="4">4×</option>
-      </select>
-    </div>
-    <div class="zoomrahmen">
-      <div id="kalibrierFlaeche" class="flaeche kalibrier">
-        <canvas id="kalibrierCanvas"></canvas>
-      </div>
-    </div>
-    <div class="regler">
-      <label for="feldWahl">Feld wählen</label>
-      <select id="feldWahl"></select>
-    </div>
-    <div class="fein">
-      <button type="button" class="zweit" data-schritt="x,-1">←</button>
-      <button type="button" class="zweit" data-schritt="x,1">→</button>
-      <button type="button" class="zweit" data-schritt="y,-1">↑</button>
-      <button type="button" class="zweit" data-schritt="y,1">↓</button>
-      <button type="button" class="zweit" data-schritt="w,-1">schmaler</button>
-      <button type="button" class="zweit" data-schritt="w,1">breiter</button>
-      <button type="button" class="zweit" data-schritt="h,-1">flacher</button>
-      <button type="button" class="zweit" data-schritt="h,1">höher</button>
-    </div>
-    <p class="klein">Ein Schritt = 0,5 mm.</p>
-    <div class="knoepfe">
-      <button id="neuAuswertenBtn" type="button">Mit diesen Rahmen neu auswerten</button>
-      <button id="jsonBtn" type="button" class="zweit">JSON ausgeben</button>
-      <button id="eckenNachziehenBtn" type="button" class="zweit">Ecken nachziehen</button>
-      <button id="kalibrierZurueckBtn" type="button" class="zweit">Zurück</button>
-    </div>
-    <textarea id="jsonAusgabe" class="ausgabe versteckt" rows="8" spellcheck="false"></textarea>
-    <div class="knoepfe">
-      <button id="jsonKopierenBtn" type="button" class="zweit versteckt">JSON kopieren</button>
-      <button id="jsonUebernehmenBtn" type="button" class="zweit versteckt">Eingefügtes JSON übernehmen</button>
-    </div>
-    <p id="jsonMeldung" class="meldung"></p>
-  </section>
-
-  <section id="auswertung" class="karte">
-    <h2>Auswertung dieser Sitzung</h2>
-    <p class="klein">Nur Zahlen, keine erkannten Werte. Grundlage sind die Knöpfe „stimmt“ / „falsch“.</p>
-    <textarea id="auswertungText" class="ausgabe" readonly rows="12"></textarea>
-    <div class="knoepfe">
-      <button id="kopierenBtn" type="button" class="zweit">Text kopieren</button>
-      <button id="loeschenBtn" type="button" class="gefahr">Alles löschen</button>
-    </div>
-  </section>
-</main>
+<section class="band trenn"><div class="wrap">
+  <h2>Testcodes mit erfundenen Daten</h2>
+  <p class="note">Zum Ausprobieren ohne echtes Rezept: Seite am PC öffnen und den Code mit dem Handy fotografieren. Oder „Hier direkt lesen“ tippen, dann liest das Gerät den Code ohne Kamera. Aufbau wie im KBV-Handbuch (PDF417, Felder mit TAB getrennt, Umlaute in ISO 8859-15).</p>
+  <p class="note"><a href="schablone.html">Zum bisherigen Schablonen-Prototyp</a></p>
+  <div id="presets" class="row" role="group" aria-label="Beispiele"></div>
+  <div id="codeBox"><canvas id="code" aria-label="PDF417-Testcode"></canvas></div>
+  <div id="genInfo"></div>
+  <div class="row"><button type="button" class="main" id="self">Hier direkt lesen</button><button type="button" id="big">Groß anzeigen</button></div>
+  <details><summary>Testdaten ändern</summary>
+  <form id="gen" class="grid">
+    <label>Nachname<input name="nn" id="f-nn"></label>
+    <label>Vorname<input name="vn" id="f-vn"></label>
+    <label>Geburtsdatum<input name="geb" id="f-geb" placeholder="JJJJ-MM-TT"></label>
+    <label>Ausgestellt am<input name="aus" id="f-aus" placeholder="JJJJ-MM-TT"></label>
+    <label>Heilmittelbereich<select name="art" id="f-art"><option value="1">Physiotherapie</option><option value="2">Podologie</option><option value="3">Stimm/Sprech/Sprach/Schluck</option><option value="4">Ergotherapie</option><option value="5">Ernährung</option></select></label>
+    <label>Diagnosegruppe<input name="dg" id="f-dg"></label>
+    <label>ICD-10 (1)<input name="icd1" id="f-icd1"></label>
+    <label>ICD-10 (2)<input name="icd2" id="f-icd2"></label>
+    <label>Leitsymptomatik<input name="ls" id="f-ls"></label>
+    <label>Frequenz<input name="freq" id="f-freq"></label>
+    <label>Heilmittel 1<input name="hm1" id="f-hm1"></label><label>Einheiten 1<input name="e1" id="f-e1" inputmode="numeric"></label>
+    <label>Heilmittel 2<input name="hm2" id="f-hm2"></label><label>Einheiten 2<input name="e2" id="f-e2" inputmode="numeric"></label>
+    <label>Heilmittel 3<input name="hm3" id="f-hm3"></label><label>Einheiten 3<input name="e3" id="f-e3" inputmode="numeric"></label>
+    <label>Ergänzendes Heilmittel<input name="erg" id="f-erg"></label><label>Einheiten ergänzend<input name="ee" id="f-ee" inputmode="numeric"></label>
+    <label class="check"><input type="checkbox" name="hb" id="f-hb">Hausbesuch</label>
+    <label class="check"><input type="checkbox" name="dr" id="f-dr">Dringlich (14 Tage)</label>
+  </form></details>
+  <p class="note abstand"><strong>Datenschutz:</strong> Der Barcode enthält Name, Geburtsdatum und Versichertennummer. Ein Foto mit geschwärztem Namen, aber lesbarem Barcode ist nicht anonym. Fotos echter Rezepte nicht weitergeben.</p>
+</div></section>
+<script src="pdf417.js"></script>
+<script src="barcode.js"></script>
 </body>
 </html>

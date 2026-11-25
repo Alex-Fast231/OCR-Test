@@ -1,0 +1,63 @@
+/* VOICE: nüchternes Werkzeug für die Praxis, klinisch und ruhig
+   IDEA: verhält sich wie ein Prüfschein, der neben dem Rezept liegt
+   PICTURE: der große Aufnahme-Knopf oben, darunter das Ergebnis als Prüfschein
+   COLOUR and TYPE: tiefes Grün, Weiß, Lindweiß, Koralle für Probleme; Inter Tight + Inter
+   LAYOUT: eine Spalte, Kopf grün, Testcodes darunter */
+:root{color-scheme:light dark;--bg:light-dark(#ffffff,#0d1714);--ink:light-dark(#0f1f1b,#e8f1ec);--mute:light-dark(#53625d,#9db0a8);--line:light-dark(#dfe7e3,#24342f);--green:#00463c;--lime:#e6f5c8;--coral:#ff6f59;--card:light-dark(#f6faf7,#13211d)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow-x:clip}
+h1,h2{font-weight:700;line-height:1.05;text-wrap:balance;margin:0}
+h1{font-size:clamp(32px,7vw,48px)}h2{font-size:24px}
+.band{padding:clamp(28px,4vw,56px) max(5vw,16px)}
+.wrap{max-width:720px;margin:0 auto}
+header{background:var(--green);color:#fff}
+header p{color:var(--lime);margin:12px 0 24px;max-width:36em}
+.picks{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:12px}
+.pick{position:relative;display:flex;align-items:center;justify-content:center;gap:10px;min-height:72px;border-radius:14px;font-weight:600;font-size:18px;cursor:pointer;border:2px solid var(--lime);color:var(--green);background:var(--lime);text-align:center;padding:10px}
+.pick.alt{background:transparent;color:#fff}
+.pick input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.pick:focus-within{outline:3px solid #fff;outline-offset:3px}
+.pick.busy{opacity:.6}
+.pick svg{flex:none}
+.pick.live{width:100%;margin-bottom:12px;font-family:inherit}
+#liveBox{position:relative;margin-bottom:12px;border-radius:14px;overflow:hidden;background:#000}
+#vid{display:block;width:100%;max-height:60vh;object-fit:cover}
+#liveBox::before{content:"";position:absolute;left:8%;right:8%;top:30%;bottom:30%;border:3px solid var(--lime);border-radius:10px;z-index:1;pointer-events:none}
+#liveMsg{position:absolute;left:0;right:0;bottom:56px;text-align:center;color:#fff;font-size:14px;text-shadow:0 1px 3px #000;z-index:2}
+#liveStop{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);z-index:2}
+#dec{font-size:13px;color:var(--lime);opacity:.85;margin-top:14px}
+#busy{margin-top:12px;color:#fff}
+.card{border:1px solid var(--line);border-left:6px solid var(--mute);border-radius:12px;background:var(--card);padding:20px;margin-top:8px}
+.card.ok{border-left-color:#3f9f6b}.card.warn{border-left-color:#e7a33b}.card.fail{border-left-color:var(--coral)}
+.meta{font-size:13px;color:var(--mute);margin:6px 0 12px}
+#warn{margin:0 0 12px;padding-left:20px}#warn li{color:light-dark(#9a3b2c,#ff9d8c)}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:9px 0;border-top:1px solid var(--line);vertical-align:top}
+th{font-weight:400;color:var(--mute);width:42%;padding-right:12px}
+td{font-weight:600;overflow-wrap:anywhere}td.bad{color:light-dark(#b23b26,#ff9d8c)}
+details{margin-top:14px}summary{cursor:pointer;color:var(--mute);min-height:44px;display:flex;align-items:center}
+#raw th{font-size:13px}#raw td{font-weight:400;font-family:ui-monospace,monospace;font-size:14px}
+.row{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+button{font:inherit;font-weight:600;min-height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #3f9f6b;outline-offset:2px}
+button.main{background:var(--green);color:#fff;border-color:var(--green)}
+#presets{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+#presets button{flex:none}
+#presets button[aria-pressed=true]{background:var(--lime);color:var(--green);border-color:var(--green)}
+#codeBox{background:#fff;border-radius:12px;padding:12px;margin-top:14px;border:1px solid var(--line)}
+#codeBox canvas{display:block;width:100%;height:auto;image-rendering:pixelated}
+#codeBox.full{position:fixed;inset:0;z-index:9;display:flex;align-items:center;padding:4vw;border-radius:0}
+#codeBox.full::after{content:"Tippen zum Schließen";position:absolute;bottom:16px;left:0;right:0;text-align:center;color:#555;font-size:14px}
+#genInfo{font-size:13px;color:var(--mute);margin-top:8px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px;margin-top:12px}
+.grid label{display:flex;flex-direction:column;font-size:13px;color:var(--mute);gap:4px}
+.grid .w2{grid-column:span 2}
+input,select{font:inherit;font-size:16px;min-height:44px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);width:100%}
+.check{flex-direction:row!important;align-items:center;gap:10px!important;font-size:16px!important;color:var(--ink)!important}
+.check input{width:24px;min-height:24px}
+.note{font-size:14px;color:var(--mute)}
+.note strong{color:var(--ink)}
+@media(max-width:600px){.picks{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.grid .w2{grid-column:auto}th{width:44%}}
+@media(prefers-reduced-motion:no-preference){.card{animation:in .25s ease-out}@keyframes in{from{opacity:0;transform:translateY(6px)}}}
+.trenn{border-top:1px solid var(--line)}.abstand{margin-top:20px}a{color:inherit}

@@ -8,6 +8,7 @@
 #   als ONNX-Datei entnommen aus dem npm-Paket multilingual-purejs-ocr 1.0.1 (Ordner models/, Lizenz ISC,
 #   models/LICENSE-multilingual-purejs-ocr.txt). Unverändert.
 # katalog.js: Auszug aus Alex-Fast231/App-Agent (Stand 6a1d849).
+# pdf417.js: Codewort-Tabelle aus zxing-cpp 2.2.1 (Lizenz Apache-2.0) entnommen, Rest eigener Code.
 # Alles andere: für den Prototyp geschrieben.
 #
 104e761303b47d665380fd08e36c96d111b76662139d0efd74642f2453569ee9  ./app.css
@@ -18,7 +19,7 @@ da6ea14e15f1c5062e420dcc200e34f4ca7f24b67d4fc8bf00dcd9db64e799bb  ./UEBERGABE.md
 c074a894893618df2cabd13f2fd54761f34a5d0650cffc43156a273c822f7716  ./app.js
 484bb3cafbec48ab52e58ab76ceb0aa38458f2e7543c4e0590b6187a580fa0e0  ./ausrichten.js
 088749535891dc9a02a8dbc489580a2befd465e960b9d5f488d17d2160ea538e  ./bild.js
-ff435d4318aebba383234d56d5cf424a0b5706915f06cad2845ab38b7693f0ae  ./index.html
+ff435d4318aebba383234d56d5cf424a0b5706915f06cad2845ab38b7693f0ae  ./schablone.html
 92cfbedb6f71ed2c23782d858c43d295b303ad3546645f70afed87a8cc112b5d  ./kanten.js
 8acb915000e463a04085da473e474168f63b98e8224eeeb4daa9cc5fff1fb9f3  ./katalog.js
 2f07c72751aed99790b8a4869cf2311df85a860b22ded05fa22803587a48922c  ./lib/LICENSE-onnxruntime-web.txt
@@ -41,3 +42,7 @@ ecc2f24c89a86542c8f6a7c737bde4df05970b617e0a17ae1035069d66ea9fb6  ./testbilder/d
 70bafa15640f13b4814bf7e7ec8ec08fb3bc607ec3d311c141c7b47790914846  ./werkzeuge/schablone-testformular.json
 1d931bb6d3c28e85e965d5aec39b072eeeda19eb1e35761ccd56d8a313c41fcc  ./werkzeuge/test-lokal.mjs
 8238f0ee3482216281282a577825861a0ee6c9372b2fdf93ac3ee1311cdad20d  ./werkzeuge/testbilder.py
+52ebc011328d27b1970ee8bb4b98baf6aad622106f8702e8aa6b5171dac0b503  ./index.html
+46cb7c1c79a89fb54708a5527e4194794b0cf6400451224fbe0f0dc9903b661b  ./barcode.js
+2aa695c17b302d0e1a4e143d7498380838a7da8793a653583a9fff77c751e402  ./barcode.css
+94b1e10dad7a8b95063ef564e7ab654a276054137d3c6e5b0c27313d8c4ce48a  ./pdf417.js

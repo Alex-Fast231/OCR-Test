@@ -2,6 +2,15 @@
 
 Stand 16.11.2026. Anweisung: `PAKET_OCR_PROTOTYP.md` (Chat), Feldauswahl nach Rückmeldung von Alex am selben Tag. Reiner Test-Prototyp, unabhängig vom Strato-Umzug.
 
+
+## Änderung 25.11.2026: Barcode statt Schablone als Startseite
+
+- Die Startseite (`index.html`) liest jetzt den 2D-Barcode (PDF417) unten rechts auf dem Muster 13. Laut KBV-Handbuch Blankoformularbedruckung (Version 4.80, Abschnitt 3.11.1) stehen darin alle benötigten Felder: Name, Vorname, Geburtsdatum, Ausstellungsdatum, beide ICD-10, Diagnosegruppe, Leitsymptomatik, drei Heilmittel plus ergänzendes mit Einheiten, Frequenz, Hausbesuch, dringlich. Felder sind durch TAB getrennt, Zeichensatz ISO 8859-15.
+- Lesen über den eingebauten `BarcodeDetector` des Browsers (Chrome auf Android). Live-Kamera, Foto oder Galeriebild. Keine fremde Bibliothek, CSP ohne `'wasm-unsafe-eval'`.
+- Testcodes mit erfundenen Daten erzeugt `pdf417.js` (eigener Encoder, Tabelle aus zxing-cpp entnommen, gegen zxing-cpp 2.2.1 gegengelesen).
+- Der bisherige Schablonen-Prototyp liegt unverändert unter `schablone.html`.
+- Datenschutz: Der Barcode enthält dieselben Personendaten wie das Rezept. Ein Foto mit geschwärztem Namen und lesbarem Barcode ist nicht anonym.
+
 ## Adresse
 
 `https://alex-fast231.github.io/OCR-Test/`, eigenes Repo `Alex-Fast231/OCR-Test`, Branch `main`, Dateien im Hauptverzeichnis. GitHub Pages muss in den Repo-Einstellungen eingeschaltet sein (Settings → Pages → Branch `main`, Ordner `/ (root)`).
