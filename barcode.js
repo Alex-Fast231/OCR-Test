@@ -10,14 +10,38 @@ const PRESETS = [
 ];
 
 /* ---------- Lesen ---------- */
-let detector = null;
-try { if ('BarcodeDetector' in window) detector = new BarcodeDetector({formats:['pdf417']}); } catch(e) { detector = null; }
+// Hauptleser: zxing-wasm (lokal in lib/, keine fremden Server).
+// Rückfall: BarcodeDetector des Geräts, nur wenn er PDF417 kann.
+const ZX_OPT = {formats: ['PDF417'], tryHarder: true, tryRotate: true, tryInvert: true, tryDownscale: true, maxNumberOfSymbols: 1};
+let zx = null, zxInfo = 'lädt …', detector = null, detInfo = 'nicht vorhanden';
+const iso = (() => { try { return new TextDecoder('iso-8859-15'); } catch(e) { return new TextDecoder('latin1'); } })();
 
 function status() {
-  const z = !!window.ZXing;
-  $('#dec').textContent = detector ? 'Barcode-Leser des Geräts: bereit' : 'Dieser Browser hat keinen eingebauten Barcode-Leser. Bitte Chrome auf Android nehmen.';
+  $('#dec').textContent = 'zxing-wasm: ' + zxInfo + ' · Geräte-Leser: ' + detInfo;
 }
-status();
+
+async function ladeLeser() {
+  status();
+  if ('BarcodeDetector' in window) {
+    try {
+      const f = await BarcodeDetector.getSupportedFormats();
+      if (f.includes('pdf_417')) { detector = new BarcodeDetector({formats: ['pdf_417']}); detInfo = 'Rückfall (' + f.join(', ') + ')'; }
+      else detInfo = 'ohne PDF417 (' + (f.join(', ') || 'keine Formate') + '), nicht genutzt';
+    } catch(e) { detInfo = 'Fehler, nicht genutzt'; }
+  }
+  status();
+  if (!window.ZXingWASM) { zxInfo = 'nicht geladen (Skript fehlt)'; status(); return; }
+  try {
+    await ZXingWASM.prepareZXingModule({
+      overrides: { locateFile: (path, prefix) => path.endsWith('.wasm') ? new URL('lib/' + path, document.baseURI).href : prefix + path },
+      fireImmediately: true
+    });
+    zx = ZXingWASM;
+    zxInfo = 'geladen (Hauptleser)';
+  } catch(e) { zxInfo = 'nicht geladen (' + (e && e.message || e) + ')'; }
+  status();
+}
+const leserBereit = ladeLeser();
 
 function toCanvas(src, w, h, max, rot) {
   const s = Math.min(1, max / Math.max(w, h));
@@ -30,17 +54,32 @@ function toCanvas(src, w, h, max, rot) {
   return c;
 }
 
-function zxingRead(c) {
-  const Z = window.ZXing; if (!Z) return null;
-  const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
-  const lum = new Uint8ClampedArray(c.width*c.height);
-  for (let i = 0, j = 0; i < lum.length; i++, j += 4) lum[i] = (d[j]*299 + d[j+1]*587 + d[j+2]*114) / 1000;
-  const hints = new Map(); hints.set(Z.DecodeHintType.TRY_HARDER, true);
-  hints.set(Z.DecodeHintType.POSSIBLE_FORMATS, [Z.BarcodeFormat.PDF_417]);
+// Ausschnitt (Anteile 0..1) auf Zielgröße (längere Seite) bringen, auch vergrößern
+function ausschnitt(src, w, h, x0, y0, x1, y1, ziel) {
+  const sx = Math.round(w * x0), sy = Math.round(h * y0), sw = Math.round(w * (x1 - x0)), sh = Math.round(h * (y1 - y0));
+  const f = ziel / Math.max(sw, sh);
+  const c = document.createElement('canvas');
+  c.width = Math.round(sw * f); c.height = Math.round(sh * f);
+  const g = c.getContext('2d', {willReadFrequently: true});
+  g.imageSmoothingQuality = 'high';
+  g.drawImage(src, sx, sy, sw, sh, 0, 0, c.width, c.height);
+  return c;
+}
+
+async function zxLesen(c) {
+  if (!zx) return null;
   try {
-    const bmp = new Z.BinaryBitmap(new Z.HybridBinarizer(new Z.RGBLuminanceSource(lum, c.width, c.height)));
-    return new Z.PDF417Reader().decode(bmp, hints).getText();
+    const bild = c.getContext('2d', {willReadFrequently: true}).getImageData(0, 0, c.width, c.height);
+    const r = (await zx.readBarcodes(bild, ZX_OPT)).find(x => x.isValid);
+    if (!r) return null;
+    // Rohbytes selbst als ISO-8859-15 lesen (Umlaute laut KBV-Handbuch)
+    return r.bytes && r.bytes.length ? iso.decode(r.bytes) : r.text;
   } catch(e) { return null; }
+}
+
+async function geraetLesen(c) {
+  if (!detector) return null;
+  try { const r = await detector.detect(c); return r.length ? r[0].rawValue : null; } catch(e) { return null; }
 }
 
 function fixText(t) {
@@ -50,25 +89,23 @@ function fixText(t) {
   return t;
 }
 
+// Foto: ganzes Bild in voller Auflösung, dann untere Hälfte, dann unteres
+// rechtes Viertel (dort sitzt der Barcode), jeweils vergrößert
 async function decodeImage(src, w, h) {
-  const t0 = performance.now(); let text = null, how = '';
-  if (detector) {
-    // Mehrere Größen probieren: In voller Fotoauflösung findet der Leser den
-    // PDF417 oft nicht, verkleinert dagegen schon (Test mit echtem Rezeptfoto).
-    for (const max of [1600, 1000, 2400, 3200]) {
-      try {
-        const r = await detector.detect(toCanvas(src, w, h, max, 0));
-        if (r.length) { text = r[0].rawValue; how = 'Gerät-Leser'; break; }
-      } catch(e) {}
-    }
+  await leserBereit;
+  const t0 = performance.now();
+  const versuche = [
+    ['ganzes Bild', () => toCanvas(src, w, h, 4096, 0)],
+    ['untere Hälfte', () => ausschnitt(src, w, h, 0, 0.5, 1, 1, Math.min(4096, Math.max(w, h) * 1.5))],
+    ['unteres rechtes Viertel', () => ausschnitt(src, w, h, 0.5, 0.5, 1, 1, Math.min(4096, Math.max(w, h) * 1.5))]
+  ];
+  for (const [teil, mach] of versuche) {
+    const c = mach();
+    let text = await zxLesen(c), how = 'zxing-wasm';
+    if (!text) { text = await geraetLesen(c); how = 'Geräte-Leser'; }
+    if (text) return {text: fixText(text), how: how + ', ' + teil, ms: Math.round(performance.now() - t0)};
   }
-  if ((!text || text.includes('\uFFFD')) && window.ZXing) {
-    outer: for (const max of [2000, 3200]) for (const rot of [0, 90, 180, 270]) {
-      const t = zxingRead(toCanvas(src, w, h, max, rot));
-      if (t) { text = t; how = 'ZXing'; break outer; }
-    }
-  }
-  return {text: text ? fixText(text) : null, how, ms: Math.round(performance.now() - t0)};
+  return {text: null, how: '', ms: Math.round(performance.now() - t0)};
 }
 
 /* ---------- Auswerten ---------- */
@@ -109,7 +146,7 @@ function show(res, srcLabel) {
   body.replaceChildren(); raw.replaceChildren(); w.replaceChildren();
   if (!res.text) {
     head.textContent = 'Kein Barcode gefunden';
-    $('#outMeta').textContent = srcLabel + ' · ' + res.ms + ' ms';
+    $('#outMeta').textContent = srcLabel + ' · ' + res.ms + ' ms · zxing-wasm: ' + zxInfo + ' · Geräte-Leser: ' + detInfo;
     const li = document.createElement('li');
     li.textContent = 'Barcode formatfüllend und scharf fotografieren, ohne Spiegelung. Er sitzt unten rechts auf dem Rezept.';
     w.append(li); $('#outCard').className = 'card fail'; return;
@@ -156,11 +193,8 @@ $('#gal').addEventListener('change', e => { fromFile(e.target.files[0]); e.targe
 $('#clear').addEventListener('click', () => { $('#out').hidden = true; $('#main').replaceChildren(); $('#raw').replaceChildren(); window.scrollTo(0, 0); });
 
 /* ---------- Live-Kamera ---------- */
-// PDF417 ist ein breiter, flacher Streifen. Deshalb: breiter Zielrahmen, hohe
-// Auflösung, Zoom (das Handy kann weiter weg bleiben und stellt dann scharf),
-// Dauer-Fokus und Antippen zum Scharfstellen. Gelesen wird abwechselnd der
-// Bereich im Zielrahmen und das ganze Bild.
-let stream = null, timer = null, runde = 0;
+// Etwa alle 250 ms ein Bild an zxing-wasm (Rückfall: Geräte-Leser).
+let stream = null, timer = null;
 function stopLive() {
   if (timer) clearTimeout(timer); timer = null;
   if (stream) stream.getTracks().forEach(t => t.stop()); stream = null;
@@ -170,13 +204,7 @@ function spur() { return stream && stream.getVideoTracks()[0]; }
 async function fokus() {
   const tr = spur(); if (!tr || !tr.getCapabilities) return;
   const cap = tr.getCapabilities();
-  try {
-    if (cap.focusMode && cap.focusMode.includes('single-shot')) {
-      await tr.applyConstraints({advanced: [{focusMode: 'single-shot'}]});
-      await new Promise(r => setTimeout(r, 600));
-    }
-    if (cap.focusMode && cap.focusMode.includes('continuous')) await tr.applyConstraints({advanced: [{focusMode: 'continuous'}]});
-  } catch(e) {}
+  try { if (cap.focusMode && cap.focusMode.includes('continuous')) await tr.applyConstraints({advanced: [{focusMode: 'continuous'}]}); } catch(e) {}
 }
 async function zoom(z) {
   const tr = spur(); if (!tr || !tr.getCapabilities) return false;
@@ -186,50 +214,39 @@ async function zoom(z) {
   document.querySelectorAll('#zoomRow button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.z === z)));
   return true;
 }
-// Bereich im Zielrahmen (ganze Breite, mittleres Drittel der Höhe) in voller Auflösung
-function zielAusschnitt(v) {
-  const W = v.videoWidth, H = v.videoHeight, y0 = Math.round(H * 0.3), h = Math.round(H * 0.4);
-  const c = document.createElement('canvas'); c.width = W; c.height = h;
-  c.getContext('2d').drawImage(v, 0, y0, W, h, 0, 0, W, h);
-  return c;
-}
 async function tick() {
   const v = $('#vid'); if (!stream) return;
+  const t0 = performance.now();
   if (v.readyState >= 2 && v.videoWidth) {
-    let text = null, how = '';
-    runde++;
-    if (detector) {
-      try {
-        const quelle = runde % 2 ? zielAusschnitt(v) : v;
-        const r = await detector.detect(quelle);
-        if (r.length) { text = r[0].rawValue; how = 'Gerät-Leser (live)'; }
-      } catch(e) {}
+    const c = toCanvas(v, v.videoWidth, v.videoHeight, 4096, 0);
+    let text = await zxLesen(c), how = 'zxing-wasm (live)';
+    if (!text) { text = await geraetLesen(c); how = 'Geräte-Leser (live)'; }
+    if (text && stream) {
+      if (navigator.vibrate) try { navigator.vibrate(80); } catch(e) {}
+      const info = v.videoWidth + '×' + v.videoHeight;
+      stopLive(); show({text: fixText(text), how: how + ', ' + info, ms: Math.round(performance.now() - t0)}, 'Live-Kamera'); return;
     }
-    if ((!text || text.includes('\uFFFD')) && window.ZXing) {
-      const t = zxingRead(toCanvas(v, v.videoWidth, v.videoHeight, 1600, 0));
-      if (t) { text = t; how = 'ZXing (live)'; }
-    }
-    if (text) { if (navigator.vibrate) try { navigator.vibrate(80); } catch(e) {}
-      stopLive(); show({text: fixText(text), how, ms: 0}, 'Live-Kamera'); return; }
   }
-  timer = setTimeout(tick, detector ? 120 : 400);
+  if (stream) timer = setTimeout(tick, Math.max(0, 250 - (performance.now() - t0)));
 }
 $('#liveBtn').addEventListener('click', async () => {
   try {
     stream = await navigator.mediaDevices.getUserMedia({audio: false, video: {
-      facingMode: {ideal: 'environment'}, width: {ideal: 3840}, height: {ideal: 2160}}});
+      facingMode: {ideal: 'environment'}, width: {min: 1280, ideal: 1920}, height: {min: 720, ideal: 1080}}});
+  } catch(e) {
+    try { stream = await navigator.mediaDevices.getUserMedia({audio: false, video: {facingMode: {ideal: 'environment'}}}); } catch(e2) { stream = null; }
+  }
+  if (!stream) { stopLive(); $('#dec').textContent = 'Live-Kamera nicht erlaubt oder nicht verfügbar. Nimm „Foto aufnehmen“.'; return; }
+  try {
     const v = $('#vid'); v.srcObject = stream; await v.play();
     $('#liveBox').hidden = false; $('#liveBtn').hidden = true;
-    const hatZoom = await zoom(2);
-    $('#zoomRow').hidden = !hatZoom;
     await fokus();
-    runde = 0; tick();
-  } catch(e) {
-    stopLive();
-    $('#dec').textContent = 'Live-Kamera nicht erlaubt oder nicht verfügbar. Nimm „Foto aufnehmen“.';
-  }
+    const tr = spur(), cap = tr && tr.getCapabilities ? tr.getCapabilities() : {};
+    $('#zoomRow').hidden = !cap.zoom;
+    await leserBereit; tick();
+  } catch(e) { stopLive(); }
 });
-$('#vid').addEventListener('click', () => { $('#liveMsg').textContent = 'Stelle scharf …'; fokus().then(() => { $('#liveMsg').textContent = 'Barcode quer in den Rahmen, ca. 20–30 cm Abstand'; }); });
+$('#vid').addEventListener('click', () => fokus());
 document.querySelectorAll('#zoomRow button').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); zoom(+b.dataset.z).then(fokus); }));
 $('#liveStop').addEventListener('click', stopLive);
 if (!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) $('#liveBtn').hidden = true;

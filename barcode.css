@@ -23,7 +23,7 @@ header p{color:var(--lime);margin:12px 0 24px;max-width:36em}
 .pick.live{width:100%;margin-bottom:12px;font-family:inherit}
 #liveBox{position:relative;margin-bottom:12px;border-radius:14px;overflow:hidden;background:#000}
 #vid{display:block;width:100%;height:auto;max-height:75vh;object-fit:contain;cursor:crosshair}
-#liveBox::before{content:"";position:absolute;left:4%;right:4%;top:38%;bottom:38%;border:3px solid var(--lime);border-radius:8px;z-index:1;pointer-events:none}
+#liveBox::before{content:"";position:absolute;left:3%;right:3%;top:25%;bottom:25%;border:3px solid var(--lime);border-radius:8px;z-index:1;pointer-events:none}
 #liveMsg{position:absolute;left:8px;right:8px;bottom:56px;text-align:center;color:#fff;font-size:14px;text-shadow:0 1px 3px #000;z-index:2}
 #liveStop{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);z-index:2}
 #dec{font-size:13px;color:var(--lime);opacity:.85;margin-top:14px}

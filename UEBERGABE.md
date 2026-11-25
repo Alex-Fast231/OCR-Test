@@ -3,6 +3,23 @@
 Stand 16.11.2026. Anweisung: `PAKET_OCR_PROTOTYP.md` (Chat), Feldauswahl nach Rückmeldung von Alex am selben Tag. Reiner Test-Prototyp, unabhängig vom Strato-Umzug.
 
 
+## Änderungen 25.11.2026 (6): zxing-wasm als Hauptleser
+
+- **Anlass:** Auf dem Samsung Galaxy A57 (Chrome) meldete die Seite „Geräte-Leser bereit“, las aber keinen echten Muster-13-Barcode, weder live noch per Foto. Dasselbe Rezept liest zxing-cpp 2.2.1 einwandfrei (33 Felder, Formularcode 13, Version 10). Problem ist also der eingebaute BarcodeDetector.
+- **zxing-wasm 3.1.7** (npm, nur der Reader, Lizenz MIT; enthält zxing-cpp, Lizenz Apache-2.0) liegt lokal: `lib/zxing-wasm-reader.js` (IIFE-Build, globales `ZXingWASM`), `lib/zxing_reader.wasm` (0,95 MB), Lizenzen `lib/LICENSE-zxing-wasm.txt` und `lib/LICENSE-zxing-cpp.txt`. Die .wasm wird über `locateFile` relativ aus `lib/` geladen. Die eingebaute Standardadresse (jsDelivr) wird also nicht benutzt, `connect-src 'self'` würde sie ohnehin sperren. Version 3.1.8 war erst einen Tag alt, deshalb 3.1.7.
+- **CSP:** `script-src 'self' 'wasm-unsafe-eval'` (für WebAssembly), sonst unverändert.
+- **Hauptleser zxing-wasm:** formats `PDF417`, `tryHarder`, `tryRotate`, `tryInvert`, `tryDownscale`. Die Rohbytes (`bytes`) werden selbst als ISO-8859-15 dekodiert (Umlaute laut KBV-Handbuch).
+- **Rückfall BarcodeDetector:** nur, wenn `getSupportedFormats()` `pdf_417` enthält.
+- **Foto/Galerie:** erst das ganze Bild in voller Auflösung (bis 4096 px), dann die untere Hälfte, dann das untere rechte Viertel, jeweils vergrößert (1,5-fach, höchstens 4096 px).
+- **Live-Kamera:** 1920 × 1080 angefordert (mindestens 1280 × 720, sonst Standardkamera), Dauerfokus, etwa alle 250 ms ein Bild an zxing-wasm. Hinweis im Sucher: „Barcode bildfüllend, nah ran, ohne Spiegelung“. Zoomknöpfe nur, wenn die Kamera Zoom kann (Start 1×).
+- **Anzeige:** Die Kopfzeile zeigt, ob zxing-wasm geladen ist und welche Formate der Geräte-Leser kann bzw. ob er genutzt wird. Die Ergebnis-Karte zeigt Leser, Bildteil und Dauer, bei Misserfolg den Zustand beider Leser.
+- **Lokaler Test** (Headless-Chromium ohne BarcodeDetector):
+  - Die drei Testcodes werden gelesen, Umlaute richtig (Müller/Jürgen, Schäfer, Weiß), 4–21 ms.
+  - Erzeugte „Handyfotos“ 3000 × 4000 mit Testcode unten rechts (1400 bzw. 900 px breit, leicht schräg, unscharf, auch um 90° gedreht) werden über „ganzes Bild“ gelesen, 230–380 ms.
+  - Ein sehr kleiner (700 px), 4° schräger und unscharfer Code wird nicht gelesen. Auch zxing-cpp liest ihn nicht.
+  - Keine Anfragen nach außen, keine Konsolenfehler.
+- **Nicht getestet:** echtes Rezept auf dem Galaxy A57. Das ist die Abnahme bei Alex.
+
 ## Änderungen 25.11.2026 (5): Barcode-Leser verbessert
 
 - Echtes Rezeptfoto von Alex (Barcode-Ausschnitt) getestet, Inhalt nicht ausgegeben, Foto danach gelöscht: Der PDF417 ist lesbar, **33 Felder, Formularcode 13**, wie im KBV-Aufbau angenommen. In voller Auflösung (3000 × 4000) fand der Leser (zxing-cpp) den Code nicht, auf die Hälfte oder ein Viertel verkleinert schon.
