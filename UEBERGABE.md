@@ -8,6 +8,12 @@ Stand 16.11.2026. Anweisung: `PAKET_OCR_PROTOTYP.md` (Chat), Feldauswahl nach R�
 
 Eine erste Fassung lag in `App-Agent/ocr-test/` (Commit `2f563ba`). Maßgeblich ist ab jetzt dieses Repo.
 
+## Änderungen 25.11.2026 (4): Rahmen von Alex, exakt ohne Spielraum
+
+- `schablone-muster13.json` enthält das JSON von Alex 1:1. Festlegung von Alex: Der Therapeut zieht die Ecken auf das Rezept, danach gelten genau diese Rahmen. Nichts verschieben, kein Spielraum.
+- Gelesen wird exakt der Rahmen, ohne zusätzlichen Rand (vorher oben 0,3 mm, unten 1 mm, seitlich 2 mm). Die automatische Ausrichtung bleibt aus (`"ausrichten": false`).
+- Innerhalb des Rahmens bleibt die Aufbereitung: Linien entfernen, kleine Beschriftungsreste verwerfen, bei Datum/ICD/Einheiten die gültige Zeile wählen. Dabei wird nichts verschoben. Ankreuzfelder werden wie bisher im Inneren des Kästchens gemessen.
+
 ## Änderungen 25.11.2026 (3): feste Rahmen, automatische Ausrichtung aus
 
 - **Rückmeldung von Alex:** Mit der automatischen Ausrichtung wurde es schlechter, die Rahmen wanderten in verschiedene Richtungen. Ursache: Die Ausrichtung sucht schwarze Schrift. Beim echten Muster 13 ist aber auch der Vordruck schwarz (Beschriftungen, Linien), deshalb hat sie falsch geschoben.

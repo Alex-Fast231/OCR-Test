@@ -158,10 +158,9 @@ async function leseFeld(blatt, feld, ausrichtung) {
   if (feld.typ === "kreuz") {
     e.anteil = tintenAnteil(blatt, r, 0.22, 0.55);
   } else {
-    // Textfelder mit etwas Rand lesen: oben nur 0,3 mm (darüber stehen auf dem
-    // Muster 13 die Beschriftungen), unten 1 mm, seitlich 2 mm
-    const mmY = NORM_HOEHE / 148, mmX = NORM_BREITE / 105;
-    const oben = Math.round(mmY * 0.3), unten = Math.round(mmY * 1.0), rx = Math.round(mmX * 2);
+    // Gelesen wird genau der Rahmen aus der Schablone, ohne zusätzlichen Rand
+    // (Festlegung von Alex, 25.11.2026)
+    const oben = 0, unten = 0, rx = 0;
     const x0 = Math.max(0, r.x - rx), y0 = Math.max(0, r.y - oben);
     const rr = { x: x0, y: y0, w: Math.min(NORM_BREITE - x0, r.w + 2 * rx), h: Math.min(NORM_HOEHE - y0, r.h + oben + unten) };
     // Datum, ICD und Einheiten: alle Zeilen lesen, die Prüfung wählt die gültige
