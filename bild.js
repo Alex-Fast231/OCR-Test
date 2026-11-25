@@ -323,7 +323,7 @@ export function tintenAnteil(bild, r, innen = 0.22, faktor = 0.55) {
 
 // ------------------------------------------------------------ Textzeilen
 // Liefert vorbereitete Zeilen (Graustufen 0..255, schwarzer Text auf Weiß).
-export function textZeilen(bild, r, maxZeilen = 1, mitteY = null) {
+export function textZeilen(bild, r, maxZeilen = 1, mitteY = null, kernX0 = 0, kernX1 = Infinity) {
   const papierUmgebung = papierHell(bild, r);
   const g = rotKanal(bild, r);
   const w = r.w, h = r.h;
@@ -360,11 +360,21 @@ export function textZeilen(bild, r, maxZeilen = 1, mitteY = null) {
     for (let x = 0; x < w; x++) if (tinte(y * w + x)) n++;
     if (n > w * 0.6) for (let x = 0; x < w; x++) v[y * w + x] = 255;
   }
+  // Spaltenstriche: viel Tinte in der Spalte oder ein durchgehendes Stück über
+  // mehr als die halbe Höhe (Ziffern sind kürzer). Je drei Nachbarspalten zusammen,
+  // damit leicht schräge Striche erkannt werden. Im Rand neben dem Rahmen strenger.
+  const weg = new Uint8Array(w);
   for (let x = 0; x < w; x++) {
-    let n = 0;
-    for (let y = 0; y < h; y++) if (tinte(y * w + x)) n++;
-    if (n > h * 0.8) for (let y = 0; y < h; y++) v[y * w + x] = 255;
+    let n = 0, lauf = 0, laengster = 0;
+    for (let y = 0; y < h; y++) {
+      const t = tinte(y * w + x) || (x > 0 && tinte(y * w + x - 1)) || (x < w - 1 && tinte(y * w + x + 1));
+      if (tinte(y * w + x)) n++;
+      if (t) { lauf++; if (lauf > laengster) laengster = lauf; } else lauf = 0;
+    }
+    const grenze = x < kernX0 || x > kernX1 ? 0.35 : 0.6;
+    if (n > h * grenze || laengster > h * 0.5) { weg[x] = 1; if (x > 0) weg[x - 1] = 1; if (x < w - 1) weg[x + 1] = 1; }
   }
+  for (let x = 0; x < w; x++) if (weg[x]) for (let y = 0; y < h; y++) v[y * w + x] = 255;
   // Zeilenprofil
   const profil = new Uint32Array(h);
   let gesamt = 0;
@@ -395,7 +405,11 @@ export function textZeilen(bild, r, maxZeilen = 1, mitteY = null) {
     return { a, b, masse };
   });
   const hoechste = Math.max(...laeufe.map((l) => l.b - l.a));
-  laeufe = laeufe.filter((l) => l.b - l.a >= hoechste * 0.4);
+  // Eintragungen sind größer gedruckt als die (schwarzen) Beschriftungen des
+  // Vordrucks; flache Läufe (Beschriftungen, Reste von Linien) fallen raus.
+  const minHoehe = 18; // etwa 1,8 mm bei 10 Pixeln je mm
+  laeufe = laeufe.filter((l) => l.b - l.a >= Math.max(hoechste * 0.7, minHoehe));
+  if (!laeufe.length) return { zeilen: [], leer: true };
   if (maxZeilen === 1 && laeufe.length > 1) {
     // Zeile, die die Mitte des eigentlichen Rahmens trifft (der Ausschnitt hat
     // etwas Rand, damit angeschnittener Text nicht verloren geht)

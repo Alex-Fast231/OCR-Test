@@ -8,6 +8,19 @@ Stand 16.11.2026. Anweisung: `PAKET_OCR_PROTOTYP.md` (Chat), Feldauswahl nach R�
 
 Eine erste Fassung lag in `App-Agent/ocr-test/` (Commit `2f563ba`). Maßgeblich ist ab jetzt dieses Repo.
 
+## Änderungen 25.11.2026 (2): Test mit einem echten Rezeptfoto von Alex
+
+Alex hat ein Foto eines echten Muster 13 geschickt (Name, Adresse, Geburtsdatum, Nummern geschwärzt). Das Foto liegt **nicht** im Repo. Erkenntnisse und Änderungen:
+
+- **Der Vordruck ist schwarz, nicht rot.** Das Ausblenden des roten Vordrucks wirkt beim echten Formular also nicht. Beschriftungen, Kastenlinien und Unterstreichungen landen mit im Ausschnitt.
+  - Zeilen, die kleiner als etwa 1,8 mm oder deutlich flacher als die höchste Zeile im Ausschnitt sind, werden verworfen. Das betrifft Beschriftungen wie „geb. am“ und Linienreste.
+  - Senkrechte Striche (Spaltenlinien) werden entfernt, auch wenn sie leicht schräg sind und nicht über die ganze Höhe gehen. Im Rand neben dem Rahmen gilt dafür eine strengere Schwelle.
+- **Mehr Spielraum senkrecht:** Textfelder werden mit 1,2 mm Rand oben und unten gelesen (vorher 0,6 mm), weil einzelne Einträge (z. B. die Einheiten) etwas höher oder tiefer gedruckt sein können. Bei Datum, ICD-10 und Einheiten werden alle Zeilen im Ausschnitt gelesen. Die Prüfung nimmt die Zeile, die als Datum, Code bzw. Zahl gültig ist.
+- **Blatt reicht bis an den Bildrand:** Auf dem Foto fehlte die untere Blattkante. Die Eckensuche hatte deshalb eine Formularlinie als Unterkante genommen, das Blatt war gestaucht und alle Rahmen lagen daneben. Jetzt darf der Bildrand als Blattkante dienen, wenn dort Papier ist. Es erscheint der Hinweis, mit etwas Abstand zu fotografieren.
+- **Blattrand statt Formularlinie:** Bei dunklem Tisch muss hinter einem Blattrand der Tisch liegen (außen deutlich dunkler als Papier). Bei hellem Tisch gilt die Regel nicht.
+- **Ergebnis am echten Foto:** Ausstellungsdatum 29.09.2026, ICD-10 G82.49 und P91.9, Heilmittel KG-ZNS, Einheiten 20, Hausbesuch nein, Dringlich leer, leere Heilmittelzeilen leer: alles richtig. Name, Vorname und Geburtsdatum waren geschwärzt und ließen sich nicht prüfen. Die 20 Einheiten werden gelb markiert, weil die App für ZN höchstens 10 je Verordnung kennt.
+- Testbilder (Nachbau): weiter 99 % (1008 von 1020).
+
 ## Änderungen 25.11.2026: Ausrichtung springt nicht mehr in die Nachbarzeile
 
 - **Problem bei Alex:** Im Kalibriermodus lagen die Rahmen richtig, beim Lesen zeigte das Nachname-Feld aber die Straße, das Vorname-Feld den Nachnamen usw. Ursache: Die Ausrichtung durfte senkrecht ± 5 mm schieben (dazu ± 3 % Streckung). Auf dem echten Muster 13 liegen die Zeilen im Namensblock nur etwa 3,4 mm auseinander. Eine Zeile weiter passt fast genauso gut, die Ausrichtung konnte also in die Nachbarzeile springen. Im Nachbau-Formular (5,5 mm Zeilenabstand) fiel das nicht auf.

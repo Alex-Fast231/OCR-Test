@@ -165,18 +165,42 @@ export function bewerte(felder, schablone, schwelle) {
   const nachId = new Map(felder.map((f) => [f.id, f]));
   const defs = new Map(schablone.felder.map((f) => [f.id, f]));
   const aus = new Map();
-  const textVon = (f) => (f && f.zeilen ? f.zeilen.map((z) => z.text).join(" ").trim() : "");
-  const konfVon = (f) => (f && f.zeilen && f.zeilen.length ? Math.min(...f.zeilen.map((z) => z.konf)) : 0);
+  const rang = { gruen: 3, gelb: 2, leer: 1, rot: 0 };
+  // Bei Datum, ICD und Einheiten können mehrere Zeilen im Ausschnitt liegen
+  // (Beschriftung, Nachbarzeile). Gewählt wird die Zeile, die am besten passt.
+  const einzelPruefung = { geburtsdatum: (t, d) => pruefeDatum(t, d.art), ausstellungsdatum: (t, d) => pruefeDatum(t, d.art), icd: (t) => pruefeIcd(t), einheiten: (t) => pruefeEinheiten(t, null) };
+  const besteZeile = (f, d) => {
+    if (!f || !f.zeilen || f.zeilen.length < 2 || !einzelPruefung[d.art]) return null;
+    let beste = null;
+    for (const z of f.zeilen) {
+      const t = z.text.trim();
+      if (!t) continue;
+      const b = einzelPruefung[d.art](t, d);
+      const wert = rang[b.ampel] * 10 + z.konf;
+      if (!beste || wert > beste.wert) beste = { z, wert };
+    }
+    return beste ? beste.z : null;
+  };
+  const textVon = (f, d) => {
+    if (!f || !f.zeilen) return "";
+    const z = d && besteZeile(f, d);
+    return z ? z.text.trim() : f.zeilen.map((x) => x.text).join(" ").trim();
+  };
+  const konfVon = (f, d) => {
+    if (!f || !f.zeilen || !f.zeilen.length) return 0;
+    const z = d && besteZeile(f, d);
+    return z ? z.konf : Math.min(...f.zeilen.map((x) => x.konf));
+  };
 
   // ICD zuerst: daraus die Diagnosegruppe laut App (für Heilmittel und Höchstmenge)
   let icdGruppe = null;
   for (const f of felder) {
     const d = defs.get(f.id);
     if (!d || d.art !== "icd") continue;
-    const roh = textVon(f);
+    const roh = textVon(f, d);
     let b;
     if (!roh) b = d.optional ? { wert: "", ampel: "leer", hinweise: [] } : { wert: "", ampel: "rot", hinweise: ["leer oder nicht lesbar"] };
-    else b = konfAmpel(pruefeIcd(roh), konfVon(f));
+    else b = konfAmpel(pruefeIcd(roh), konfVon(f, d));
     b.roh = roh;
     if (!icdGruppe && b.gruppe) icdGruppe = b.gruppe;
     aus.set(f.id, b);
@@ -192,12 +216,12 @@ export function bewerte(felder, schablone, schwelle) {
       const s = kreuzStatus(f.anteil, schwelle);
       b = { wert: s, ampel: s === "unsicher" ? "gelb" : "gruen", hinweise: [`Tinte ${(f.anteil * 100).toFixed(1)} %`] };
     } else {
-      const roh = textVon(f);
+      const roh = textVon(f, d);
       if (!roh) {
         b = d.optional ? { wert: "", ampel: "leer", hinweise: [] } : { wert: "", ampel: "rot", hinweise: ["leer oder nicht lesbar"] };
         if (d.art === "einheiten" && d.bezug && textVon(nachId.get(d.bezug))) b = { wert: "", ampel: "rot", hinweise: ["Heilmittel ohne Einheiten"] };
       } else {
-        const k = konfVon(f);
+        const k = konfVon(f, d);
         if (d.art === "name") b = pruefeName(roh);
         else if (d.art === "geburtsdatum" || d.art === "ausstellungsdatum") b = pruefeDatum(roh, d.art);
         else if (d.art === "heilmittel") b = pruefeHeilmittel(roh, gruppe);

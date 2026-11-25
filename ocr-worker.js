@@ -104,8 +104,9 @@ async function neuesBild(bitmap) {
     ecken = fund.e;
     mitten = fund.mitten || findeMitten(kb, ecken);
     const b = fund.bewertung;
-    sicher = b.mittel > 0.55 && b.minimum > 0.3;
-    if (!sicher) grund = "Ränder nur teilweise erkannt";
+    sicher = b.mittel > 0.55 && b.minimum > 0.3 && !b.amRand;
+    if (b.amRand) grund = "das Blatt reicht bis an den Bildrand. Am besten mit etwas Abstand fotografieren, sodass rundum Tisch zu sehen ist";
+    else if (!sicher) grund = "Ränder nur teilweise erkannt";
   } else {
     ecken = randEcken(kw, kh);
     grund = "Kein Blatt gefunden";
@@ -157,12 +158,14 @@ async function leseFeld(blatt, feld, ausrichtung) {
   if (feld.typ === "kreuz") {
     e.anteil = tintenAnteil(blatt, r, 0.22, 0.55);
   } else {
-    // Textfelder mit etwas Rand lesen: 0,6 mm oben/unten, 2 mm seitlich
-    // (der Aufdruck sitzt je nach Praxisdrucker ein paar Millimeter versetzt)
-    const ry = Math.round(NORM_HOEHE / 148 * 0.6), rx = Math.round(NORM_BREITE / 105 * 2);
+    // Textfelder mit Rand lesen: 1,2 mm oben/unten, 2 mm seitlich
+    // (der Aufdruck sitzt je nach Praxisdrucker etwas versetzt)
+    const ry = Math.round(NORM_HOEHE / 148 * 1.2), rx = Math.round(NORM_BREITE / 105 * 2);
     const x0 = Math.max(0, r.x - rx), y0 = Math.max(0, r.y - ry);
     const rr = { x: x0, y: y0, w: Math.min(NORM_BREITE - x0, r.w + 2 * rx), h: Math.min(NORM_HOEHE - y0, r.h + 2 * ry) };
-    const { zeilen } = textZeilen(blatt, rr, feld.zeilen || 1, r.y - y0 + r.h / 2);
+    // Datum, ICD und Einheiten: alle Zeilen lesen, die Prüfung wählt die gültige
+    const mehrere = ["geburtsdatum", "ausstellungsdatum", "icd", "einheiten"].includes(feld.art);
+    const { zeilen } = textZeilen(blatt, rr, mehrere ? 3 : (feld.zeilen || 1), r.y - y0 + r.h / 2, r.x - x0, r.x - x0 + r.w);
     e.zeilen = [];
     for (const z of zeilen) e.zeilen.push(await erkenneZeile(z));
   }
