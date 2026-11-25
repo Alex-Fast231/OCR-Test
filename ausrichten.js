@@ -1,8 +1,10 @@
 // Automatische Ausrichtung der Feldrahmen auf den Druck des Rezepts.
 // Der Arzt bedruckt einen vorgedruckten Bogen; je nach Drucker sitzt der Druck
 // ein paar Millimeter versetzt. Dazu kommen kleine Abweichungen beim Setzen der
-// Ecken. Gesucht wird eine Verschiebung (± 5 mm) und eine leichte Streckung
-// (± 3 %), bei der möglichst viel schwarze Schrift in den Rahmen liegt und
+// Ecken. Gesucht wird eine Verschiebung (waagerecht ± 6 mm, senkrecht nur
+// ± 1,5 mm, weniger als ein Zeilenabstand von etwa 3,4 mm, damit kein Rahmen
+// in die Nachbarzeile springt) und eine leichte Streckung
+// (± 1,5 %), bei der möglichst viel schwarze Schrift in den Rahmen liegt und
 // möglichst wenig direkt daneben. Der rote Vordruck zählt nicht (Rotkanal).
 
 const PX_JE_MM = 2; // Rechenraster: 2 Punkte je mm
@@ -88,9 +90,9 @@ export function ausrichten(blatt, felder, blattMm = [105, 148]) {
 
   const null0 = guete(0, 0, 1);
   const funde = [];
-  for (let s = 0.97; s <= 1.0301; s += 0.01) {
-    for (let dy = -5; dy <= 5.001; dy += 0.5) {
-      for (let dx = -5; dx <= 5.001; dx += 0.5) funde.push({ dx, dy, s, g: guete(dx, dy, s) });
+  for (let s = 0.985; s <= 1.0151; s += 0.005) {
+    for (let dy = -1.5; dy <= 1.501; dy += 0.5) {
+      for (let dx = -6; dx <= 6.001; dx += 0.5) funde.push({ dx, dy, s, g: guete(dx, dy, s) });
     }
   }
   let bester = funde.reduce((a, b) => (b.g > a.g ? b : a));

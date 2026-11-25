@@ -8,6 +8,13 @@ Stand 16.11.2026. Anweisung: `PAKET_OCR_PROTOTYP.md` (Chat), Feldauswahl nach R�
 
 Eine erste Fassung lag in `App-Agent/ocr-test/` (Commit `2f563ba`). Maßgeblich ist ab jetzt dieses Repo.
 
+## Änderungen 25.11.2026: Ausrichtung springt nicht mehr in die Nachbarzeile
+
+- **Problem bei Alex:** Im Kalibriermodus lagen die Rahmen richtig, beim Lesen zeigte das Nachname-Feld aber die Straße, das Vorname-Feld den Nachnamen usw. Ursache: Die Ausrichtung durfte senkrecht ± 5 mm schieben (dazu ± 3 % Streckung). Auf dem echten Muster 13 liegen die Zeilen im Namensblock nur etwa 3,4 mm auseinander. Eine Zeile weiter passt fast genauso gut, die Ausrichtung konnte also in die Nachbarzeile springen. Im Nachbau-Formular (5,5 mm Zeilenabstand) fiel das nicht auf.
+- **Änderung:** waagerecht ± 6 mm (der Druck wandert bei Alex vor allem waagerecht, bis etwa 4,5 mm), senkrecht nur noch ± 1,5 mm, Streckung nur ± 1,5 %. Ein Sprung um eine ganze Zeile ist damit ausgeschlossen.
+- Schablone mit dem vierten JSON von Alex ersetzt.
+- Testvariante „versetzt“ angepasst (waagerecht 1,5–5 mm, senkrecht 0,3–1,2 mm). 60 Bilder: 99 % (1008 von 1020), jede Variante 98–99 %.
+
 ## Änderungen 23.11.2026: automatische Ausrichtung auf den Druck
 
 - **Problem bei Alex:** Nach jeder Kalibrierung lagen die Rahmen beim nächsten Rezept wieder daneben, mal links, mal rechts, besonders die Kästchen Hausbesuch ja/nein und Dringlich. Die Rahmen selbst ändern sich nicht. Was sich verschiebt, ist der **Druck**: Die Praxisdrucker bedrucken den vorgedruckten Bogen je nach Einzug ein paar Millimeter versetzt, dazu kommen kleine Abweichungen beim Setzen der Ecken.

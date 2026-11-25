@@ -377,7 +377,7 @@ def main():
             name = f"{d['id']}-{v}.jpg"
             b = blatt
             if v == "versetzt":  # Praxisdrucker druckt um ein paar mm versetzt
-                b = formular(d, (rng.choice([-1, 1]) * rng.uniform(1.5, 3.5), rng.choice([-1, 1]) * rng.uniform(1.0, 2.5)))
+                b = formular(d, (rng.choice([-1, 1]) * rng.uniform(1.5, 5.0), rng.choice([-1, 1]) * rng.uniform(0.3, 1.2)))
             foto(b, v, rng).save(os.path.join(ziel, name), quality=88)
             wahrheit.append({"datei": name, "datensatz": d["id"], "variante": v, "erwartet": erwartet(d)})
     with open(os.path.join(ziel, "wahrheit.json"), "w", encoding="utf-8") as f:
