@@ -53,10 +53,14 @@ function fixText(t) {
 async function decodeImage(src, w, h) {
   const t0 = performance.now(); let text = null, how = '';
   if (detector) {
-    try {
-      const r = await detector.detect(toCanvas(src, w, h, 3000, 0));
-      if (r.length) { text = r[0].rawValue; how = 'Gerät-Leser'; }
-    } catch(e) {}
+    // Mehrere Größen probieren: In voller Fotoauflösung findet der Leser den
+    // PDF417 oft nicht, verkleinert dagegen schon (Test mit echtem Rezeptfoto).
+    for (const max of [1600, 1000, 2400, 3200]) {
+      try {
+        const r = await detector.detect(toCanvas(src, w, h, max, 0));
+        if (r.length) { text = r[0].rawValue; how = 'Gerät-Leser'; break; }
+      } catch(e) {}
+    }
   }
   if ((!text || text.includes('\uFFFD')) && window.ZXing) {
     outer: for (const max of [2000, 3200]) for (const rot of [0, 90, 180, 270]) {
@@ -152,17 +156,55 @@ $('#gal').addEventListener('change', e => { fromFile(e.target.files[0]); e.targe
 $('#clear').addEventListener('click', () => { $('#out').hidden = true; $('#main').replaceChildren(); $('#raw').replaceChildren(); window.scrollTo(0, 0); });
 
 /* ---------- Live-Kamera ---------- */
-let stream = null, timer = null;
+// PDF417 ist ein breiter, flacher Streifen. Deshalb: breiter Zielrahmen, hohe
+// Auflösung, Zoom (das Handy kann weiter weg bleiben und stellt dann scharf),
+// Dauer-Fokus und Antippen zum Scharfstellen. Gelesen wird abwechselnd der
+// Bereich im Zielrahmen und das ganze Bild.
+let stream = null, timer = null, runde = 0;
 function stopLive() {
   if (timer) clearTimeout(timer); timer = null;
   if (stream) stream.getTracks().forEach(t => t.stop()); stream = null;
   $('#liveBox').hidden = true; $('#liveBtn').hidden = false;
 }
+function spur() { return stream && stream.getVideoTracks()[0]; }
+async function fokus() {
+  const tr = spur(); if (!tr || !tr.getCapabilities) return;
+  const cap = tr.getCapabilities();
+  try {
+    if (cap.focusMode && cap.focusMode.includes('single-shot')) {
+      await tr.applyConstraints({advanced: [{focusMode: 'single-shot'}]});
+      await new Promise(r => setTimeout(r, 600));
+    }
+    if (cap.focusMode && cap.focusMode.includes('continuous')) await tr.applyConstraints({advanced: [{focusMode: 'continuous'}]});
+  } catch(e) {}
+}
+async function zoom(z) {
+  const tr = spur(); if (!tr || !tr.getCapabilities) return false;
+  const cap = tr.getCapabilities(); if (!cap.zoom) return false;
+  const w = Math.max(cap.zoom.min, Math.min(cap.zoom.max, z));
+  try { await tr.applyConstraints({advanced: [{zoom: w}]}); } catch(e) { return false; }
+  document.querySelectorAll('#zoomRow button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.z === z)));
+  return true;
+}
+// Bereich im Zielrahmen (ganze Breite, mittleres Drittel der Höhe) in voller Auflösung
+function zielAusschnitt(v) {
+  const W = v.videoWidth, H = v.videoHeight, y0 = Math.round(H * 0.3), h = Math.round(H * 0.4);
+  const c = document.createElement('canvas'); c.width = W; c.height = h;
+  c.getContext('2d').drawImage(v, 0, y0, W, h, 0, 0, W, h);
+  return c;
+}
 async function tick() {
   const v = $('#vid'); if (!stream) return;
-  if (v.readyState >= 2) {
+  if (v.readyState >= 2 && v.videoWidth) {
     let text = null, how = '';
-    if (detector) { try { const r = await detector.detect(v); if (r.length) { text = r[0].rawValue; how = 'Gerät-Leser (live)'; } } catch(e) {} }
+    runde++;
+    if (detector) {
+      try {
+        const quelle = runde % 2 ? zielAusschnitt(v) : v;
+        const r = await detector.detect(quelle);
+        if (r.length) { text = r[0].rawValue; how = 'Gerät-Leser (live)'; }
+      } catch(e) {}
+    }
     if ((!text || text.includes('\uFFFD')) && window.ZXing) {
       const t = zxingRead(toCanvas(v, v.videoWidth, v.videoHeight, 1600, 0));
       if (t) { text = t; how = 'ZXing (live)'; }
@@ -170,20 +212,25 @@ async function tick() {
     if (text) { if (navigator.vibrate) try { navigator.vibrate(80); } catch(e) {}
       stopLive(); show({text: fixText(text), how, ms: 0}, 'Live-Kamera'); return; }
   }
-  timer = setTimeout(tick, detector ? 150 : 400);
+  timer = setTimeout(tick, detector ? 120 : 400);
 }
 $('#liveBtn').addEventListener('click', async () => {
   try {
-    stream = await navigator.mediaDevices.getUserMedia({video: {facingMode: {ideal: 'environment'}, width: {ideal: 1920}, height: {ideal: 1080}}, audio: false});
+    stream = await navigator.mediaDevices.getUserMedia({audio: false, video: {
+      facingMode: {ideal: 'environment'}, width: {ideal: 3840}, height: {ideal: 2160}}});
     const v = $('#vid'); v.srcObject = stream; await v.play();
-    try { const tr = stream.getVideoTracks()[0], cap = tr.getCapabilities ? tr.getCapabilities() : {};
-      if (cap.focusMode && cap.focusMode.includes('continuous')) await tr.applyConstraints({advanced: [{focusMode: 'continuous'}]}); } catch(e) {}
-    $('#liveBox').hidden = false; $('#liveBtn').hidden = true; tick();
+    $('#liveBox').hidden = false; $('#liveBtn').hidden = true;
+    const hatZoom = await zoom(2);
+    $('#zoomRow').hidden = !hatZoom;
+    await fokus();
+    runde = 0; tick();
   } catch(e) {
     stopLive();
     $('#dec').textContent = 'Live-Kamera nicht erlaubt oder nicht verfügbar. Nimm „Foto aufnehmen“.';
   }
 });
+$('#vid').addEventListener('click', () => { $('#liveMsg').textContent = 'Stelle scharf …'; fokus().then(() => { $('#liveMsg').textContent = 'Barcode quer in den Rahmen, ca. 20–30 cm Abstand'; }); });
+document.querySelectorAll('#zoomRow button').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); zoom(+b.dataset.z).then(fokus); }));
 $('#liveStop').addEventListener('click', stopLive);
 if (!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) $('#liveBtn').hidden = true;
 

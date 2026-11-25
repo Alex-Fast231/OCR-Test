@@ -3,6 +3,13 @@
 Stand 16.11.2026. Anweisung: `PAKET_OCR_PROTOTYP.md` (Chat), Feldauswahl nach Rückmeldung von Alex am selben Tag. Reiner Test-Prototyp, unabhängig vom Strato-Umzug.
 
 
+## Änderungen 25.11.2026 (5): Barcode-Leser verbessert
+
+- Echtes Rezeptfoto von Alex (Barcode-Ausschnitt) getestet, Inhalt nicht ausgegeben, Foto danach gelöscht: Der PDF417 ist lesbar, **33 Felder, Formularcode 13**, wie im KBV-Aufbau angenommen. In voller Auflösung (3000 × 4000) fand der Leser (zxing-cpp) den Code nicht, auf die Hälfte oder ein Viertel verkleinert schon.
+- **Foto/Galerie:** Der Leser des Geräts probiert jetzt mehrere Bildgrößen (1600, 1000, 2400, 3200 Pixel), nicht mehr nur 3000.
+- **Live-Kamera** (war unscharf): 4K statt Full-HD angefordert, Zoom 2× wenn die Kamera das kann (Knöpfe 1×/2×/3×; so kann das Handy weiter weg bleiben und stellt scharf), Dauer-Fokus, Antippen des Bilds stellt neu scharf. Breiter, flacher Zielrahmen für den PDF417. Gelesen wird abwechselnd der Bereich im Rahmen (volle Auflösung) und das ganze Bild.
+- Nicht getestet: der Leser des Geräts (BarcodeDetector) selbst. Den gibt es in der Testumgebung (Linux-Chromium) nicht, nur in Chrome auf Android.
+
 ## Änderung 25.11.2026: Barcode statt Schablone als Startseite
 
 - Die Startseite (`index.html`) liest jetzt den 2D-Barcode (PDF417) unten rechts auf dem Muster 13. Laut KBV-Handbuch Blankoformularbedruckung (Version 4.80, Abschnitt 3.11.1) stehen darin alle benötigten Felder: Name, Vorname, Geburtsdatum, Ausstellungsdatum, beide ICD-10, Diagnosegruppe, Leitsymptomatik, drei Heilmittel plus ergänzendes mit Einheiten, Frequenz, Hausbesuch, dringlich. Felder sind durch TAB getrennt, Zeichensatz ISO 8859-15.
