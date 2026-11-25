@@ -158,11 +158,12 @@ async function leseFeld(blatt, feld, ausrichtung) {
   if (feld.typ === "kreuz") {
     e.anteil = tintenAnteil(blatt, r, 0.22, 0.55);
   } else {
-    // Textfelder mit Rand lesen: 1,2 mm oben/unten, 2 mm seitlich
-    // (der Aufdruck sitzt je nach Praxisdrucker etwas versetzt)
-    const ry = Math.round(NORM_HOEHE / 148 * 1.2), rx = Math.round(NORM_BREITE / 105 * 2);
-    const x0 = Math.max(0, r.x - rx), y0 = Math.max(0, r.y - ry);
-    const rr = { x: x0, y: y0, w: Math.min(NORM_BREITE - x0, r.w + 2 * rx), h: Math.min(NORM_HOEHE - y0, r.h + 2 * ry) };
+    // Textfelder mit etwas Rand lesen: oben nur 0,3 mm (darüber stehen auf dem
+    // Muster 13 die Beschriftungen), unten 1 mm, seitlich 2 mm
+    const mmY = NORM_HOEHE / 148, mmX = NORM_BREITE / 105;
+    const oben = Math.round(mmY * 0.3), unten = Math.round(mmY * 1.0), rx = Math.round(mmX * 2);
+    const x0 = Math.max(0, r.x - rx), y0 = Math.max(0, r.y - oben);
+    const rr = { x: x0, y: y0, w: Math.min(NORM_BREITE - x0, r.w + 2 * rx), h: Math.min(NORM_HOEHE - y0, r.h + oben + unten) };
     // Datum, ICD und Einheiten: alle Zeilen lesen, die Prüfung wählt die gültige
     const mehrere = ["geburtsdatum", "ausstellungsdatum", "icd", "einheiten"].includes(feld.art);
     const { zeilen } = textZeilen(blatt, rr, mehrere ? 3 : (feld.zeilen || 1), r.y - y0 + r.h / 2, r.x - x0, r.x - x0 + r.w);
@@ -193,7 +194,10 @@ async function auswerten(ecken, mitten, schablone, lageSuchen) {
   const t0 = performance.now();
   const mm = schablone.blatt_mm || [105, 148];
   let blatt = entzerre(bild, ecken, NORM_BREITE, NORM_HOEHE, mitten);
-  let ausrichtung = ausrichten(blatt, schablone.felder, mm);
+  // Automatische Ausrichtung nur, wenn die Schablone sie ausdrücklich einschaltet.
+  // Beim echten Muster 13 (schwarzer Vordruck) hat sie die Rahmen verschoben.
+  const mitAusrichtung = schablone.ausrichten === true;
+  let ausrichtung = mitAusrichtung ? ausrichten(blatt, schablone.felder, mm) : null;
   let gedreht = 0;
   if (lageSuchen) {
     const ziel = schablone.felder.filter((f) => ["ausstellungsdatum", "geburtsdatum", "icd"].includes(f.art) && !f.optional).length;
@@ -202,7 +206,7 @@ async function auswerten(ecken, mitten, schablone, lageSuchen) {
     // ob das Blatt auf dem Kopf steht (halbe Drehung).
     if (beste < ziel) {
       const b2 = entzerre(bild, drehe(ecken, 2), NORM_BREITE, NORM_HOEHE, drehe(mitten, 2));
-      const a2 = ausrichten(b2, schablone.felder, mm);
+      const a2 = mitAusrichtung ? ausrichten(b2, schablone.felder, mm) : null;
       const g = await lageGuete(b2, schablone, a2);
       if (g > beste) { blatt = b2; ausrichtung = a2; gedreht = 2; }
     }

@@ -8,6 +8,16 @@ Stand 16.11.2026. Anweisung: `PAKET_OCR_PROTOTYP.md` (Chat), Feldauswahl nach R�
 
 Eine erste Fassung lag in `App-Agent/ocr-test/` (Commit `2f563ba`). Maßgeblich ist ab jetzt dieses Repo.
 
+## Änderungen 25.11.2026 (3): feste Rahmen, automatische Ausrichtung aus
+
+- **Rückmeldung von Alex:** Mit der automatischen Ausrichtung wurde es schlechter, die Rahmen wanderten in verschiedene Richtungen. Ursache: Die Ausrichtung sucht schwarze Schrift. Beim echten Muster 13 ist aber auch der Vordruck schwarz (Beschriftungen, Linien), deshalb hat sie falsch geschoben.
+- **Automatische Ausrichtung abgeschaltet.** Die Rahmen bleiben exakt, wie sie in `schablone-muster13.json` stehen. Der Code bleibt drin und wirkt nur mit `"ausrichten": true` in der Schablone.
+- **Rahmen am echten Foto gemessen** (Millimeterraster über dem entzerrten Blatt, Name/Geburtsdatum anhand der Schwärzungsbalken). Sie liegen knapp unter den Beschriftungen.
+- **Lesebereich:** oben nur 0,3 mm Rand (darüber stehen die Beschriftungen), unten 1 mm, seitlich 2 mm.
+- Am echten Foto richtig: Ausstellungsdatum, ICD-10 1 und 2, Heilmittel, Einheiten, leere Zeilen, Hausbesuch, Dringlich. Name, Vorname und Geburtsdatum sind geschwärzt, die Rahmen sitzen aber auf den Zeilen.
+- Testbilder (Nachbau, eigene Schablone): 98–99 % je Variante. Ausnahme „versetzt“ (absichtlich versetzter Druck), die ohne Ausrichtung schlechter ist.
+- **Datenschutz:** Für die Kalibrierung reicht ein Foto, auf dem die persönlichen Daten geschwärzt sind. Die Balken zeigen die Lage der Zeilen. Ungeschwärzte Rezepte Dritter bitte nicht schicken.
+
 ## Änderungen 25.11.2026 (2): Test mit einem echten Rezeptfoto von Alex
 
 Alex hat ein Foto eines echten Muster 13 geschickt (Name, Adresse, Geburtsdatum, Nummern geschwärzt). Das Foto liegt **nicht** im Repo. Erkenntnisse und Änderungen:
