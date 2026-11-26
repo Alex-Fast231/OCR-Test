@@ -192,65 +192,6 @@ $('#cam').addEventListener('change', e => { fromFile(e.target.files[0]); e.targe
 $('#gal').addEventListener('change', e => { fromFile(e.target.files[0]); e.target.value = ''; });
 $('#clear').addEventListener('click', () => { $('#out').hidden = true; $('#main').replaceChildren(); $('#raw').replaceChildren(); window.scrollTo(0, 0); });
 
-/* ---------- Live-Kamera ---------- */
-// Etwa alle 250 ms ein Bild an zxing-wasm (Rückfall: Geräte-Leser).
-let stream = null, timer = null;
-function stopLive() {
-  if (timer) clearTimeout(timer); timer = null;
-  if (stream) stream.getTracks().forEach(t => t.stop()); stream = null;
-  $('#liveBox').hidden = true; $('#liveBtn').hidden = false;
-}
-function spur() { return stream && stream.getVideoTracks()[0]; }
-async function fokus() {
-  const tr = spur(); if (!tr || !tr.getCapabilities) return;
-  const cap = tr.getCapabilities();
-  try { if (cap.focusMode && cap.focusMode.includes('continuous')) await tr.applyConstraints({advanced: [{focusMode: 'continuous'}]}); } catch(e) {}
-}
-async function zoom(z) {
-  const tr = spur(); if (!tr || !tr.getCapabilities) return false;
-  const cap = tr.getCapabilities(); if (!cap.zoom) return false;
-  const w = Math.max(cap.zoom.min, Math.min(cap.zoom.max, z));
-  try { await tr.applyConstraints({advanced: [{zoom: w}]}); } catch(e) { return false; }
-  document.querySelectorAll('#zoomRow button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.z === z)));
-  return true;
-}
-async function tick() {
-  const v = $('#vid'); if (!stream) return;
-  const t0 = performance.now();
-  if (v.readyState >= 2 && v.videoWidth) {
-    const c = toCanvas(v, v.videoWidth, v.videoHeight, 4096, 0);
-    let text = await zxLesen(c), how = 'zxing-wasm (live)';
-    if (!text) { text = await geraetLesen(c); how = 'Geräte-Leser (live)'; }
-    if (text && stream) {
-      if (navigator.vibrate) try { navigator.vibrate(80); } catch(e) {}
-      const info = v.videoWidth + '×' + v.videoHeight;
-      stopLive(); show({text: fixText(text), how: how + ', ' + info, ms: Math.round(performance.now() - t0)}, 'Live-Kamera'); return;
-    }
-  }
-  if (stream) timer = setTimeout(tick, Math.max(0, 250 - (performance.now() - t0)));
-}
-$('#liveBtn').addEventListener('click', async () => {
-  try {
-    stream = await navigator.mediaDevices.getUserMedia({audio: false, video: {
-      facingMode: {ideal: 'environment'}, width: {min: 1280, ideal: 1920}, height: {min: 720, ideal: 1080}}});
-  } catch(e) {
-    try { stream = await navigator.mediaDevices.getUserMedia({audio: false, video: {facingMode: {ideal: 'environment'}}}); } catch(e2) { stream = null; }
-  }
-  if (!stream) { stopLive(); $('#dec').textContent = 'Live-Kamera nicht erlaubt oder nicht verfügbar. Nimm „Foto aufnehmen“.'; return; }
-  try {
-    const v = $('#vid'); v.srcObject = stream; await v.play();
-    $('#liveBox').hidden = false; $('#liveBtn').hidden = true;
-    await fokus();
-    const tr = spur(), cap = tr && tr.getCapabilities ? tr.getCapabilities() : {};
-    $('#zoomRow').hidden = !cap.zoom;
-    await leserBereit; tick();
-  } catch(e) { stopLive(); }
-});
-$('#vid').addEventListener('click', () => fokus());
-document.querySelectorAll('#zoomRow button').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); zoom(+b.dataset.z).then(fokus); }));
-$('#liveStop').addEventListener('click', stopLive);
-if (!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) $('#liveBtn').hidden = true;
-
 /* ---------- Testcodes ---------- */
 const form = $('#gen');
 const ymd = v => /^\d{4}-\d{2}-\d{2}$/.test(v) ? v.replace(/-/g, '') : '';

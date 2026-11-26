@@ -13,19 +13,13 @@ h1{font-size:clamp(32px,7vw,48px)}h2{font-size:24px}
 .wrap{max-width:720px;margin:0 auto}
 header{background:var(--green);color:#fff}
 header p{color:var(--lime);margin:12px 0 24px;max-width:36em}
-.picks{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:12px}
+.picks{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
 .pick{position:relative;display:flex;align-items:center;justify-content:center;gap:10px;min-height:72px;border-radius:14px;font-weight:600;font-size:18px;cursor:pointer;border:2px solid var(--lime);color:var(--green);background:var(--lime);text-align:center;padding:10px}
 .pick.alt{background:transparent;color:#fff}
 .pick input{position:absolute;inset:0;opacity:0;cursor:pointer}
 .pick:focus-within{outline:3px solid #fff;outline-offset:3px}
 .pick.busy{opacity:.6}
 .pick svg{flex:none}
-.pick.live{width:100%;margin-bottom:12px;font-family:inherit}
-#liveBox{position:relative;margin-bottom:12px;border-radius:14px;overflow:hidden;background:#000}
-#vid{display:block;width:100%;height:auto;max-height:75vh;object-fit:contain;cursor:crosshair}
-#liveBox::before{content:"";position:absolute;left:3%;right:3%;top:25%;bottom:25%;border:3px solid var(--lime);border-radius:8px;z-index:1;pointer-events:none}
-#liveMsg{position:absolute;left:8px;right:8px;bottom:56px;text-align:center;color:#fff;font-size:14px;text-shadow:0 1px 3px #000;z-index:2}
-#liveStop{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);z-index:2}
 #dec{font-size:13px;color:var(--lime);opacity:.85;margin-top:14px}
 #busy{margin-top:12px;color:#fff}
 .card{border:1px solid var(--line);border-left:6px solid var(--mute);border-radius:12px;background:var(--card);padding:20px;margin-top:8px}
@@ -61,7 +55,3 @@ input,select{font:inherit;font-size:16px;min-height:44px;padding:6px 10px;border
 @media(max-width:600px){.picks{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.grid .w2{grid-column:auto}th{width:44%}}
 @media(prefers-reduced-motion:no-preference){.card{animation:in .25s ease-out}@keyframes in{from{opacity:0;transform:translateY(6px)}}}
 .trenn{border-top:1px solid var(--line)}.abstand{margin-top:20px}a{color:inherit}
-#zoomRow{position:absolute;top:8px;right:8px;display:flex;gap:6px;z-index:2}
-#zoomRow button{min-width:44px;min-height:40px;border-radius:10px;font-weight:700}
-#zoomRow button[aria-pressed="true"]{background:var(--lime);color:var(--green)}
-#zoomRow[hidden]{display:none}

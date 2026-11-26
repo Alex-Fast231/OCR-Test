@@ -3,6 +3,12 @@
 Stand 16.11.2026. Anweisung: `PAKET_OCR_PROTOTYP.md` (Chat), Feldauswahl nach Rückmeldung von Alex am selben Tag. Reiner Test-Prototyp, unabhängig vom Strato-Umzug.
 
 
+## Änderung 26.11.2026: Abnahme bestanden, Live-Kamera entfernt
+
+- **Rückmeldung von Alex:** Mit zxing-wasm werden echte Rezepte über „Foto aufnehmen“ und „Bild aus Galerie“ fehlerfrei gelesen.
+- Die Live-Kamera wird nicht gebraucht und ist entfernt (Knopf, Sucher, Code und Styles). „Foto aufnehmen“ öffnet die Kamera-App des Handys und ist jetzt der Hauptknopf.
+- Test danach: Testcodes und erzeugte Handyfotos werden weiter gelesen, keine Fehler, keine Anfragen nach außen.
+
 ## Änderungen 25.11.2026 (6): zxing-wasm als Hauptleser
 
 - **Anlass:** Auf dem Samsung Galaxy A57 (Chrome) meldete die Seite „Geräte-Leser bereit“, las aber keinen echten Muster-13-Barcode, weder live noch per Foto. Dasselbe Rezept liest zxing-cpp 2.2.1 einwandfrei (33 Felder, Formularcode 13, Version 10). Problem ist also der eingebaute BarcodeDetector.
